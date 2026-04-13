@@ -1,0 +1,155 @@
+{
+  "teamName": "pokemon-champions-doubles",
+  "format": "champions-doubles-gen9",
+  "notes": [
+    "Exact level 50 final stats are the source of truth.",
+    "Champions IVs are treated through exact final stats instead of standard IV math.",
+    "Champions sleep and paralysis differences are tracked as notes unless explicitly modeled."
+  ],
+  "pokemon": [
+    {
+      "name": "Pelipper",
+      "species": "Pelipper",
+      "item": "Focus Sash",
+      "ability": "Drizzle",
+      "level": 50,
+      "stats": {
+        "hp": 135,
+        "atk": 70,
+        "def": 127,
+        "spa": 147,
+        "spd": 81,
+        "spe": 123
+      },
+      "moves": ["Weather Ball", "Ice Beam", "Icy Wind", "Tailwind"],
+      "description": "123 Speed is specifically calibrated to outspeed no-speed Garchomp at 122 by 1 point, so Pelipper can Ice Beam before Garchomp moves. The rest of the spread keeps strong special damage while preserving enough physical bulk to better survive common physical chip like U-turn, Flip Turn, and priority so Focus Sash is not wasted too early. Icy Wind is chosen over Hurricane because current meta targets do not reward Hurricane enough, while Icy Wind gives spread chip, Focus Sash breaking, and an extra speed-control layer when both sides have Tailwind.",
+      "breakConditions": [
+        "If no-speed Garchomp is no longer a relevant benchmark",
+        "If Hurricane gains important current-meta targets again",
+        "If Pelipper is no longer needed as secondary speed control in Tailwind mirrors",
+        "If a different physical bulk benchmark becomes more important than preserving sash through chip"
+      ]
+    },
+    {
+      "name": "Maushold",
+      "species": "Maushold",
+      "item": "Sitrus Berry",
+      "ability": "Cheek Pouch",
+      "level": 50,
+      "stats": {
+        "hp": 156,
+        "atk": 95,
+        "def": 123,
+        "spa": 117,
+        "spd": 100,
+        "spe": 117
+      },
+      "moves": ["Follow Me", "Copycat", "U-turn", "Helping Hand"],
+      "description": "117 Speed is intentionally 1 point below Archaludon at 118 so Arch always moves first and Maushold can Copycat Electro Shot in a deterministic order. Defense is raised so Maushold survives physical spread attacks such as Rock Slide more often, making the Sitrus Berry plus Cheek Pouch line last longer. 100 SpD is intentionally aligned with Archaludon's 100 SpD so Maushold can scout special damage and approximate how much Archaludon would take from the same attack. SpA is still high enough that Copycat provides meaningful second-hit damage rather than just utility.",
+      "breakConditions": [
+        "If Archaludon's speed tier changes from 118",
+        "If Copycat is no longer part of the rain damage plan",
+        "If Follow Me survival versus spread physical damage stops mattering in current meta",
+        "If Helping Hand Earthquake no longer leaves Maushold alive and procs berry",
+        "If Taunt or another utility move becomes more valuable than U-turn or Helping Hand"
+      ]
+    },
+    {
+      "name": "Archaludon",
+      "species": "Archaludon",
+      "item": "Chople Berry",
+      "ability": "Stamina",
+      "level": 50,
+      "stats": {
+        "hp": 171,
+        "atk": 112,
+        "def": 150,
+        "spa": 194,
+        "spd": 100,
+        "spe": 118
+      },
+      "moves": ["Electro Shot", "Flash Cannon", "Draco Meteor", "Protect"],
+      "description": "118 Speed is specifically 1 point above Maushold at 117 so Electro Shot always happens before Copycat. 100 SpD matches Maushold so Maushold can serve as a damage scout for Archaludon. Chople Berry is specifically for Sneasler, allowing Archaludon to survive Close Combat and retaliate. The rest of the spread keeps Archaludon as the main special attacker while also maintaining enough physical durability to function as a Stamina user.",
+      "breakConditions": [
+        "If Maushold no longer needs to Copycat Electro Shot",
+        "If Sneasler stops being a major format threat or changes its common line away from Close Combat",
+        "If a different special bulk benchmark becomes more important than matching Maushold at 100 SpD",
+        "If Archaludon is no longer one of the primary rain anchors on the team"
+      ]
+    },
+    {
+      "name": "Meganium-Mega",
+      "species": "Meganium-Mega",
+      "baseSpecies": "Meganium",
+      "item": "Meganiumite",
+      "ability": "Overgrow",
+      "megaAbility": "Mega Sol",
+      "level": 50,
+      "stats": {
+        "hp": 179,
+        "atk": 91,
+        "def": 120,
+        "spa": 119,
+        "spd": 120,
+        "spe": 138
+      },
+      "moves": ["Solar Beam", "Dazzling Gleam", "Weather Ball", "Protect"],
+      "description": "138 Speed is specifically calibrated to outspeed Venusaur outside sun at 132 and common Archaludon builds around 137. Special Attack is only pushed high enough to preserve the key jobs: threatening Venusaur with Fire Weather Ball, OHKOing Basculegion with Solar Beam, and maintaining strong pressure into Pelipper and Archaludon. The remaining points are placed into balanced bulk so Mega Meganium can reliably take one hit and attack twice. This is a control breaker, not a pure fast sweeper.",
+      "breakConditions": [
+        "If Venusaur and common Archaludon speed tiers change",
+        "If Venusaur is no longer important enough to justify the 138 benchmark",
+        "If new damage targets require more SpA than the current 119",
+        "If Mega Meganium is no longer needed as a rain and sun crossover answer",
+        "If the team stops using weather-control support to create the outspeed condition"
+      ]
+    },
+    {
+      "name": "Excadrill",
+      "species": "Excadrill",
+      "item": "Choice Scarf",
+      "ability": "Sand Rush",
+      "level": 50,
+      "stats": {
+        "hp": 185,
+        "atk": 193,
+        "def": 106,
+        "spa": 63,
+        "spd": 85,
+        "spe": 127
+      },
+      "moves": ["Iron Head", "Rock Slide", "Earthquake", "Stomping Tantrum"],
+      "description": "127 Speed is the key benchmark. With Choice Scarf it reaches 190, which outspeeds max-speed Sneasler at 189 before Unburden. With Sand Rush active, it becomes the team's hard speed override into Tailwind and Unburden states. Attack is kept high enough to preserve important Stomping Tantrum lines into Sneasler, Incineroar, and Archaludon, while Defense is raised so Excadrill can survive specific physical interactions such as Flip Turn and still fire back. Earthquake is retained both for spread pressure and because Helping Hand Earthquake does not KO Maushold, instead proccing Sitrus Berry plus Cheek Pouch.",
+      "breakConditions": [
+        "If Sneasler is no longer a defining speed benchmark",
+        "If Sand Rush plus Scarf is no longer needed to answer Tailwind and Unburden",
+        "If minimum Attack can be reduced further without losing Stomping Tantrum breakpoints",
+        "If the Maushold Helping Hand Earthquake survival interaction breaks",
+        "If spread Ground pressure becomes less important than single-target coverage"
+      ]
+    },
+    {
+      "name": "Tyranitar",
+      "species": "Tyranitar",
+      "item": "Tyranitarite",
+      "ability": "Sand Stream",
+      "level": 50,
+      "stats": {
+        "hp": 175,
+        "atk": 187,
+        "def": 140,
+        "spa": 103,
+        "spd": 150,
+        "spe": 91
+      },
+      "moves": ["Rock Slide", "Knock Off", "Dragon Tail", "Low Kick"],
+      "description": "91 Speed is specifically chosen to outspeed neutral 0 Speed Sinistcha at 90, letting Tyranitar Dragon Tail or attack before Trick Room from that benchmark. 187 Attack is the preserved offensive floor for key jobs such as Knock Off into Sinistcha and Low Kick into heavy targets like Snorlax and Incineroar. The rest is pushed heavily into bulk, especially special bulk, because this Tyranitar is now a weather-control tank and utility attacker rather than a speed trap. Tyranitarite is used because slower Mega Tyranitar can overwrite Mega Charizard Y sun on the same turn Charizard Megas.",
+      "breakConditions": [
+        "If Sinistcha is no longer relevant enough to justify 91 Speed",
+        "If Trick Room denial no longer matters enough to keep Dragon Tail",
+        "If Low Kick no longer covers Incineroar and Snorlax jobs better than alternatives",
+        "If Mega Charizard Y and other weather Mega timing wars stop mattering",
+        "If Attack can be lowered without losing key Knock Off and Low Kick benchmarks"
+      ]
+    }
+  ]
+}

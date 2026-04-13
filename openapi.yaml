@@ -1,0 +1,192 @@
+openapi: 3.1.0
+info:
+  title: Pokemon Champions Calc API
+  version: 0.1.0
+  description: >
+    Local Bun HTTP API for running Pokemon Champions doubles calculations with
+    exact level 50 stat overrides on top of Gen 9 Smogon calc logic.
+servers:
+  - url: http://localhost:3000
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Health check
+      responses:
+        "200":
+          description: Service is healthy
+  /team:
+    get:
+      operationId: getTeam
+      summary: Get the saved team
+      responses:
+        "200":
+          description: Team payload
+  /presets:
+    get:
+      operationId: getPresets
+      summary: Get supported Champions EV presets
+      responses:
+        "200":
+          description: Preset payload
+  /calc:
+    post:
+      operationId: runCalc
+      summary: Run a single calc
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalcRequest"
+      responses:
+        "200":
+          description: Calc result
+        "400":
+          description: Validation error
+  /calc/batch:
+    post:
+      operationId: runBatchCalc
+      summary: Run a batch of calcs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [requests]
+              properties:
+                requests:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/CalcRequest"
+      responses:
+        "200":
+          description: Batch calc results
+  /scenario/run:
+    post:
+      operationId: runScenario
+      summary: Run a calc and return formatted scenario text
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScenarioRequest"
+      responses:
+        "200":
+          description: Scenario result
+components:
+  schemas:
+    ExactStats:
+      type: object
+      required: [hp, atk, def, spa, spd, spe]
+      properties:
+        hp: { type: integer }
+        atk: { type: integer }
+        def: { type: integer }
+        spa: { type: integer }
+        spd: { type: integer }
+        spe: { type: integer }
+    CombatantInput:
+      type: object
+      properties:
+        teamSlot:
+          type: string
+        name:
+          type: string
+        species:
+          type: string
+        baseSpecies:
+          type: string
+        level:
+          type: integer
+        item:
+          type: string
+        ability:
+          type: string
+        megaAbility:
+          type: string
+        moves:
+          type: array
+          items:
+            type: string
+        stats:
+          $ref: "#/components/schemas/ExactStats"
+        championsPoints:
+          type: object
+          properties:
+            hp: { type: integer }
+            atk: { type: integer }
+            def: { type: integer }
+            spa: { type: integer }
+            spd: { type: integer }
+            spe: { type: integer }
+        championsPreset:
+          type: string
+        nature:
+          type: string
+        currentHP:
+          type: integer
+        status:
+          type: string
+        teraType:
+          type: string
+    CalcField:
+      type: object
+      properties:
+        weather:
+          type: string
+        terrain:
+          type: string
+        attackerSide:
+          type: object
+          properties:
+            tailwind: { type: boolean }
+            helpingHand: { type: boolean }
+            friendGuard: { type: boolean }
+        defenderSide:
+          type: object
+          properties:
+            tailwind: { type: boolean }
+            reflect: { type: boolean }
+            lightScreen: { type: boolean }
+            auroraVeil: { type: boolean }
+            friendGuard: { type: boolean }
+            protected: { type: boolean }
+    CalcRequest:
+      type: object
+      required: [attacker, defender, move]
+      properties:
+        attacker:
+          $ref: "#/components/schemas/CombatantInput"
+        defender:
+          $ref: "#/components/schemas/CombatantInput"
+        move:
+          type: string
+        field:
+          $ref: "#/components/schemas/CalcField"
+        notes:
+          type: array
+          items:
+            type: string
+        branches:
+          type: array
+          items:
+            type: string
+    ScenarioRequest:
+      type: object
+      required: [scenario, calc]
+      properties:
+        scenario:
+          type: string
+        calc:
+          $ref: "#/components/schemas/CalcRequest"
+        turnActions:
+          type: array
+          items:
+            type: string
+        fieldStateNotes:
+          type: array
+          items:
+            type: string
