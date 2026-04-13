@@ -6,7 +6,7 @@ info:
     Local Bun HTTP API for running Pokemon Champions doubles calculations with
     exact level 50 stat overrides on top of Gen 9 Smogon calc logic.
 servers:
-  - url: http://localhost:3000
+  - url: https://zero41120pokemontools.com
 paths:
   /health:
     get:
@@ -44,6 +44,23 @@ paths:
           description: Calc result
         "400":
           description: Validation error
+  /pokemon/stats:
+    post:
+      operationId: getPokemonStats
+      summary: Resolve a Pokemon into final level 50 stats
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pokemon]
+              properties:
+                pokemon:
+                  $ref: "#/components/schemas/CombatantInput"
+      responses:
+        "200":
+          description: Resolved stat payload
   /calc/batch:
     post:
       operationId: runBatchCalc

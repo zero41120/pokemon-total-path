@@ -1,9 +1,10 @@
 import { AppError, ValidationError } from "./lib/errors";
 import { runBatch, runCalc } from "./lib/calc";
 import { formatScenario } from "./lib/format";
-import { parseBatchCalcRequest, parseCalcRequest, parseScenarioRequest } from "./lib/schema";
+import { parseBatchCalcRequest, parseCalcRequest, parsePokemonStatsRequest, parseScenarioRequest } from "./lib/schema";
 import { loadTeam } from "./lib/team";
 import { listChampionsPresets } from "./lib/presets";
+import { resolvePokemonStats } from "./adapters/champions";
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {
@@ -62,6 +63,11 @@ export function createServer(port = Number(Bun.env.PORT ?? 3000)) {
         if (request.method === "POST" && url.pathname === "/calc") {
           const body = await parseRequestBody(request);
           return json(await runCalc(parseCalcRequest(body)));
+        }
+
+        if (request.method === "POST" && url.pathname === "/pokemon/stats") {
+          const body = await parseRequestBody(request);
+          return json(await resolvePokemonStats(parsePokemonStatsRequest(body).pokemon));
         }
 
         if (request.method === "POST" && url.pathname === "/calc/batch") {

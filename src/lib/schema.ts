@@ -84,6 +84,10 @@ export type ScenarioRequest = {
   fieldStateNotes?: string[];
 };
 
+export type PokemonStatsRequest = {
+  pokemon: CombatantInput;
+};
+
 const STAT_IDS: StatID[] = ["hp", "atk", "def", "spa", "spd", "spe"];
 
 export function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -137,7 +141,7 @@ export function parseChampionsPoints(value: unknown, field: string): ChampionsPo
   return points;
 }
 
-function parseCombatant(value: unknown, field: string): CombatantInput {
+export function parseCombatant(value: unknown, field: string): CombatantInput {
   if (!isPlainObject(value)) {
     throw new ValidationError(`Expected object for ${field}`);
   }
@@ -191,6 +195,16 @@ function parseCombatant(value: unknown, field: string): CombatantInput {
   }
 
   return combatant;
+}
+
+export function parsePokemonStatsRequest(value: unknown): PokemonStatsRequest {
+  if (!isPlainObject(value)) {
+    throw new ValidationError("Expected request body object");
+  }
+
+  return {
+    pokemon: parseCombatant(value.pokemon, "pokemon"),
+  };
 }
 
 export function parseCalcRequest(value: unknown): CalcRequest {

@@ -184,3 +184,20 @@ export async function toCalcPokemon(input: CombatantInput) {
     pokemon: createExactStatPokemon(smogonInput),
   };
 }
+
+export async function resolvePokemonStats(input: CombatantInput) {
+  const resolved = await resolveCombatant(input);
+  return {
+    name: resolved.displayName,
+    species: resolved.calcSpecies,
+    level: resolved.level,
+    item: resolved.item ?? null,
+    ability: resolved.displayAbility ?? resolved.ability ?? resolved.megaAbility ?? null,
+    source: resolved.source,
+    nature: resolved.nature ?? null,
+    championsPoints: resolved.championsPoints ?? null,
+    forcedWeather: resolved.forcedWeather ? resolved.forcedWeather.toLowerCase() : null,
+    stats: resolved.stats,
+    notes: resolved.notes,
+  };
+}

@@ -17,6 +17,32 @@ describe("server", () => {
     expect(body.championsPresets.some((preset: { name: string }) => preset.name === "fully_physical_defensive")).toBe(true);
   });
 
+  test("returns resolved pokemon stats", async () => {
+    const response = await createServer().fetch(
+      new Request("http://localhost/pokemon/stats", {
+        method: "POST",
+        body: JSON.stringify({
+          pokemon: {
+            species: "Umbreon",
+            level: 50,
+            championsPreset: "fully_physical_defensive",
+            championsPoints: {
+              spd: 2,
+            },
+          },
+        }),
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.source).toBe("champions-points");
+    expect(body.stats.hp).toBeGreaterThan(0);
+    expect(body.championsPoints.spd).toBe(2);
+  });
+
   test("validates bad calc requests", async () => {
     const response = await createServer().fetch(
       new Request("http://localhost/calc", {
