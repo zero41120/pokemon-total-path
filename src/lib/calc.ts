@@ -14,6 +14,53 @@ function describeKo(range: [number, number], hp: number) {
   return "no immediate KO";
 }
 
+function getOffensiveStatLabel(category?: string) {
+  if (category === "Physical") return "Atk";
+  if (category === "Special") return "SpA";
+  return null;
+}
+
+function getDefensiveStatLabel(category?: string) {
+  if (category === "Physical") return "Def";
+  if (category === "Special") return "SpD";
+  return null;
+}
+
+function getOffensiveStatValue(category: string | undefined, stats: { atk: number; spa: number }) {
+  if (category === "Physical") return stats.atk;
+  if (category === "Special") return stats.spa;
+  return null;
+}
+
+function getDefensiveStatValue(category: string | undefined, stats: { def: number; spd: number }) {
+  if (category === "Physical") return stats.def;
+  if (category === "Special") return stats.spd;
+  return null;
+}
+
+function buildResolvedDescription(
+  attackerName: string,
+  attackerStats: { atk: number; spa: number },
+  defenderName: string,
+  defenderStats: { hp: number; def: number; spd: number },
+  moveName: string,
+  moveCategory: string | undefined,
+  damageRange: [number, number],
+) {
+  const offensiveLabel = getOffensiveStatLabel(moveCategory);
+  const defensiveLabel = getDefensiveStatLabel(moveCategory);
+  const offensiveValue = getOffensiveStatValue(moveCategory, attackerStats);
+  const defensiveValue = getDefensiveStatValue(moveCategory, defenderStats);
+
+  if (!offensiveLabel || !defensiveLabel || offensiveValue === null || defensiveValue === null) {
+    return `${attackerName} ${moveName} vs. ${defenderName}`;
+  }
+
+  const percentMin = toPercent(damageRange[0], defenderStats.hp);
+  const percentMax = toPercent(damageRange[1], defenderStats.hp);
+  return `${offensiveValue} ${offensiveLabel} ${attackerName} ${moveName} vs. ${defenderStats.hp} HP / ${defensiveValue} ${defensiveLabel} ${defenderName}: ${damageRange[0]}-${damageRange[1]} (${percentMin} - ${percentMax}%)`;
+}
+
 function buildSpeedSummary(attackerSpe: number, defenderSpe: number, field?: CalcRequest["field"]) {
   const attackerTailwind = field?.attackerSide?.tailwind ? 2 : 1;
   const defenderTailwind = field?.defenderSide?.tailwind ? 2 : 1;
@@ -45,7 +92,17 @@ export async function runCalc(request: CalcRequest) {
   const result = runSmogonCalc(attacker.pokemon, defender.pokemon, move, field);
   const damageRange = result.range();
   const defenderHP = defender.resolved.stats.hp;
+  const ko = describeKo(damageRange, defenderHP);
   const speed = buildSpeedSummary(attacker.resolved.stats.spe, defender.resolved.stats.spe, request.field);
+  const resolvedDescription = buildResolvedDescription(
+    attacker.resolved.displayName,
+    attacker.resolved.stats,
+    defender.resolved.displayName,
+    defender.resolved.stats,
+    request.move,
+    result.move.category,
+    damageRange,
+  );
 
   const notes = [
     ...attacker.resolved.notes,
@@ -80,8 +137,10 @@ export async function runCalc(request: CalcRequest) {
     },
     move: request.move,
     engine: {
-      description: result.desc(),
-      fullDescription: result.fullDesc("px"),
+      description: `${resolvedDescription} -- ${ko}`,
+      fullDescription: `${resolvedDescription} -- ${ko}`,
+      libraryDescription: result.desc(),
+      libraryFullDescription: result.fullDesc("px"),
       damage: result.damage,
       rawDamageRange: damageRange,
     },
@@ -90,7 +149,7 @@ export async function runCalc(request: CalcRequest) {
       max: damageRange[1],
       percentMin: toPercent(damageRange[0], defenderHP),
       percentMax: toPercent(damageRange[1], defenderHP),
-      ko: describeKo(damageRange, defenderHP),
+      ko,
       defenderRemainingHPRange: [
         Math.max(defenderHP - damageRange[1], 0),
         Math.max(defenderHP - damageRange[0], 0),

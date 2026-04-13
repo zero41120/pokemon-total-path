@@ -84,4 +84,78 @@ describe("calc service", () => {
     expect(result.endState.weather).toBe("sun");
     expect(result.notes.some((note) => note.includes("forced to Sun"))).toBe(true);
   });
+
+  test("engine description reflects resolved stats instead of EV-style placeholders", async () => {
+    const result = await runCalc({
+      attacker: {
+        species: "Tyranitar",
+        level: 50,
+        stats: {
+          hp: 175,
+          atk: 204,
+          def: 150,
+          spa: 115,
+          spd: 150,
+          spe: 91,
+        },
+      },
+      defender: {
+        species: "Sinistcha",
+        level: 50,
+        championsPreset: "fully_physical_defensive",
+      },
+      move: "Knock Off",
+    });
+
+    expect(result.engine.description).toContain("204 Atk Tyranitar");
+    expect(result.engine.description).toContain("179 HP / 174 Def Sinistcha");
+    expect(result.engine.libraryDescription).toContain("0 Atk Tyranitar");
+  });
+
+  test("higher exact attack stat produces higher damage output", async () => {
+    const baseDefender = {
+      species: "Sinistcha",
+      level: 50,
+      championsPreset: "fully_physical_defensive" as const,
+    };
+
+    const lowerAttack = await runCalc({
+      attacker: {
+        species: "Tyranitar",
+        level: 50,
+        stats: {
+          hp: 175,
+          atk: 187,
+          def: 140,
+          spa: 103,
+          spd: 150,
+          spe: 91,
+        },
+      },
+      defender: baseDefender,
+      move: "Knock Off",
+    });
+
+    const higherAttack = await runCalc({
+      attacker: {
+        species: "Tyranitar",
+        level: 50,
+        stats: {
+          hp: 175,
+          atk: 204,
+          def: 140,
+          spa: 103,
+          spd: 150,
+          spe: 91,
+        },
+      },
+      defender: baseDefender,
+      move: "Knock Off",
+    });
+
+    expect(higherAttack.damage.max).toBeGreaterThan(lowerAttack.damage.max);
+    const lowerAverage = lowerAttack.engine.damage.reduce((sum, value) => sum + value, 0) / lowerAttack.engine.damage.length;
+    const higherAverage = higherAttack.engine.damage.reduce((sum, value) => sum + value, 0) / higherAttack.engine.damage.length;
+    expect(higherAverage).toBeGreaterThan(lowerAverage);
+  });
 });

@@ -54,7 +54,7 @@ export type AdaptedPokemonInput = {
 };
 
 export function createExactStatPokemon(input: AdaptedPokemonInput) {
-  const pokemon = new Pokemon(GEN, input.species, {
+  const options = {
     level: input.level,
     item: input.item,
     ability: input.ability,
@@ -82,13 +82,28 @@ export function createExactStatPokemon(input: AdaptedPokemonInput) {
       spd: 0,
       spe: 0,
     },
-  });
+  };
+
+  const pokemon = new Pokemon(GEN, input.species, options);
 
   const exactStats = statsToTable(input.stats);
   pokemon.name = input.displayName;
   pokemon.rawStats = exactStats;
   pokemon.stats = { ...exactStats };
   pokemon.originalCurHP = Math.min(input.currentHP ?? input.stats.hp, input.stats.hp);
+  pokemon.clone = function cloneExactStatPokemon() {
+    const cloned = new Pokemon(GEN, input.species, options);
+    cloned.name = input.displayName;
+    cloned.rawStats = { ...exactStats };
+    cloned.stats = { ...exactStats };
+    cloned.originalCurHP = Math.min(input.currentHP ?? input.stats.hp, input.stats.hp);
+    cloned.boosts = { ...pokemon.boosts };
+    cloned.status = pokemon.status;
+    cloned.toxicCounter = pokemon.toxicCounter;
+    cloned.moves = [...pokemon.moves];
+    cloned.teraType = pokemon.teraType;
+    return cloned;
+  };
   return pokemon;
 }
 
