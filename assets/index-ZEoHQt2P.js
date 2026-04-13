@@ -2,9 +2,9 @@ var e=(e,t)=>()=>(t||e((t={exports:{}}).exports,t),t.exports);(function(){let e=
 `)}function X(){return{team:T.team.map(e=>e.name),templates:D.presets,defenderPresets:E.presets}}var Z={attackerName:`Tyranitar`,attackerStats:`hp=175,atk=187,def=140,spa=103,spd=150,spe=91`,moveName:`Low Kick`,defenderName:`Snorlax`,defenderTemplateId:`fully-physical-defensive`,gameType:`Doubles`,weather:`Sand`},Q=X();document.querySelector(`#app`).innerHTML=`
   <main class="shell">
     <section class="intro">
-      <p class="eyebrow">Pokemon Champions Calc</p>
-      <h1>Paste config in, get CLI-style output back.</h1>
-      <p class="subcopy">Everything runs in the browser. The output text mirrors the terminal-style calc summary.</p>
+      <p class="eyebrow">Config-Driven Damage Calc</p>
+      <h1>Pokemon Champions Calculator</h1>
+      <p class="subcopy">Enter a calc config on the left and inspect the formatted result on the right.</p>
     </section>
     <section class="workspace">
       <div class="panel">
@@ -24,6 +24,40 @@ var e=(e,t)=>()=>(t||e((t={exports:{}}).exports,t),t.exports);(function(){let e=
           <h2>Output</h2>
         </div>
         <textarea id="output" spellcheck="false" readonly></textarea>
+      </div>
+    </section>
+    <section class="guide panel">
+      <div class="panel-head">
+        <h2>API Spec</h2>
+      </div>
+      <pre class="spec">{
+  "attackerName": "string",
+  "attackerTemplateId": "string?",
+  "attackerStats": "hp=...,atk=...,def=...,spa=...,spd=...,spe=...?",
+  "moveName": "string",
+  "defenderPresetId": "string?",
+  "defenderName": "string?",
+  "defenderTemplateId": "string?",
+  "defenderStats": "hp=...,atk=...,def=...,spa=...,spd=...,spe=...?",
+  "gameType": "Singles | Doubles ?",
+  "weather": "Rain | Sun | Sand | Snow ?",
+  "defenderCurHP": "number?",
+  "attackerHelpingHand": "boolean?",
+  "attackerTailwind": "boolean?",
+  "defenderTailwind": "boolean?"
+}</pre>
+      <div class="guide-grid">
+        <div>
+          <p><code>attackerName</code> and <code>moveName</code> are required.</p>
+          <p>For attacker input, precedence is exact team stats, then <code>attackerStats</code>, then <code>attackerTemplateId</code>.</p>
+        </div>
+        <div>
+          <p>For defender input, use one of <code>defenderPresetId</code>, <code>defenderName + defenderTemplateId</code>, or <code>defenderName + defenderStats</code>.</p>
+          <p>Exact stat string format: <code>hp=175,atk=187,def=140,spa=103,spd=150,spe=91</code>.</p>
+        </div>
+        <div>
+          <p>Optional battle state fields are <code>gameType</code>, <code>weather</code>, <code>defenderCurHP</code>, <code>attackerHelpingHand</code>, <code>attackerTailwind</code>, and <code>defenderTailwind</code>.</p>
+        </div>
       </div>
     </section>
   </main>
