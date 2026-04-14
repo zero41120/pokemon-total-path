@@ -312,7 +312,7 @@ export function startMcpServer({
 
   app.post("/mcp", async (req: ExpressRequest, res: ExpressResponse) => {
     if (req.body?.method === "notifications/initialized") {
-      res.status(200).json({ jsonrpc: "2.0" });
+      res.status(202).end();
       return;
     }
 
