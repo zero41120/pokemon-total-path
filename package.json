@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "bun --watch src/index.ts server",
     "start": "bun run src/index.ts server",
+    "dev:mcp": "bun --watch src/index.ts mcp",
+    "start:mcp": "bun run src/index.ts mcp",
     "calc:example": "bun run src/index.ts example",
     "test": "bun test",
     "check": "bun run src/index.ts health"
@@ -15,6 +17,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@smogon/calc": "^0.11.0"
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@smogon/calc": "^0.11.0",
+    "@types/bun": "^1.3.12",
+    "express": "^5.2.1",
+    "yaml": "^2.8.3",
+    "zod": "^4.3.6"
   }
 }
