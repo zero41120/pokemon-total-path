@@ -48,6 +48,8 @@ type OpenApiDocument = {
   };
 };
 
+export const OPENAPI_RESOURCE_URI = "openapi://pokemon-tools/spec";
+
 export type RestEndpoint = {
   toolName: string;
   title: string;
@@ -57,10 +59,10 @@ export type RestEndpoint = {
   inputSchema: z.ZodTypeAny;
 };
 
+const OPENAPI_YAML = readFileSync(new URL("../openapi.yaml", import.meta.url), "utf8");
+
 function loadOpenApiDocument() {
-  return YAML.parse(
-    readFileSync(new URL("../openapi.yaml", import.meta.url), "utf8"),
-  ) as OpenApiDocument;
+  return YAML.parse(OPENAPI_YAML) as OpenApiDocument;
 }
 
 function toToolName(operationId: string | undefined, method: HttpMethod, path: string) {
@@ -179,6 +181,7 @@ function requestBodySchema(operation: OpenApiOperation, document: OpenApiDocumen
 }
 
 const OPENAPI_DOCUMENT = loadOpenApiDocument();
+export { OPENAPI_YAML };
 
 export const REST_ENDPOINTS: RestEndpoint[] = Object.entries(OPENAPI_DOCUMENT.paths ?? {}).flatMap(([path, operations]) => {
   return (["get", "post"] as const).flatMap((method) => {
@@ -253,6 +256,25 @@ export function createMcpWrapperServer(restBaseUrl: string) {
         logging: {},
       },
     },
+  );
+
+  server.registerResource(
+    "openapi-spec",
+    OPENAPI_RESOURCE_URI,
+    {
+      title: "OpenAPI Spec",
+      description: "Raw YAML OpenAPI contract for the Pokemon Champions Calc API.",
+      mimeType: "application/yaml",
+    },
+    async () => ({
+      contents: [
+        {
+          uri: OPENAPI_RESOURCE_URI,
+          mimeType: "application/yaml",
+          text: OPENAPI_YAML,
+        },
+      ],
+    }),
   );
 
   for (const endpoint of REST_ENDPOINTS) {
