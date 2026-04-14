@@ -285,12 +285,20 @@ export function startMcpServer({
   restBaseUrl = Bun.env.REST_BASE_URL ?? `http://127.0.0.1:${Bun.env.REST_PORT ?? "3000"}`,
   port = Number(Bun.env.MCP_PORT ?? 3001),
   host = Bun.env.MCP_HOST ?? "127.0.0.1",
+  allowedHosts = (Bun.env.MCP_ALLOWED_HOSTS ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean),
 }: {
   restBaseUrl?: string;
   port?: number;
   host?: string;
+  allowedHosts?: string[];
 } = {}) {
-  const app = createMcpExpressApp({ host });
+  const app = createMcpExpressApp({
+    host,
+    allowedHosts: allowedHosts.length > 0 ? allowedHosts : undefined,
+  });
   app.use(express.json({ limit: "1mb" }));
 
   app.get("/health", (_req: ExpressRequest, res: ExpressResponse) => {
