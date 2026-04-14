@@ -1,8 +1,8 @@
-import { readFileSync } from "node:fs";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express, { type Request as ExpressRequest, type Response as ExpressResponse } from "express";
+import { readFileSync } from "node:fs";
 import YAML from "yaml";
 import * as z from "zod/v4";
 
@@ -319,7 +319,7 @@ export function startMcpServer({
     const server = createMcpWrapperServer(restBaseUrl);
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
-      enableJsonResponse: true,
+      // enableJsonResponse: true,
     });
 
     try {
