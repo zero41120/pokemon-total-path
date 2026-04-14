@@ -204,7 +204,7 @@ export const REST_ENDPOINTS: RestEndpoint[] = Object.entries(OPENAPI_DOCUMENT.pa
   });
 });
 
-export const BOOTSTRAP_TOOL_NAME = "get_openapi_spec";
+export const BOOTSTRAP_TOOL_NAME = "bootstrap";
 
 function toAbsoluteUrl(baseUrl: string, path: string) {
   return new URL(path, baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`).toString();
@@ -298,8 +298,8 @@ export function createMcpWrapperServer(restBaseUrl: string) {
   server.registerTool(
     BOOTSTRAP_TOOL_NAME,
     {
-      title: "Get OpenAPI Spec",
-      description: "Returns the raw OpenAPI YAML for this API so clients can inspect the full contract before using other tools.",
+      title: "Bootstrap",
+      description: "Bootstraps the client with the raw OpenAPI YAML contract for this API before using other tools.",
       inputSchema: z.object({}),
     },
     async () => createBootstrapToolResult(),

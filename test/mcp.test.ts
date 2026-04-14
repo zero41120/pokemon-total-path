@@ -26,7 +26,7 @@ describe("mcp wrapper", () => {
       "run_batch_calc",
       "run_scenario",
     ]);
-    expect(BOOTSTRAP_TOOL_NAME).toBe("get_openapi_spec");
+    expect(BOOTSTRAP_TOOL_NAME).toBe("bootstrap");
   });
 
   test("exposes the OpenAPI spec as an MCP resource payload", () => {
