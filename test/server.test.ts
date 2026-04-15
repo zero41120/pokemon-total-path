@@ -43,6 +43,32 @@ describe("server", () => {
     expect(body.championsPoints.spd).toBe(2);
   });
 
+  test("floors Champions-derived Maushold stats to match in-game values", async () => {
+    const response = await createServer().fetch(
+      new Request("http://localhost/pokemon/stats", {
+        method: "POST",
+        body: JSON.stringify({
+          pokemon: {
+            species: "Maushold",
+            level: 50,
+            nature: "Adamant",
+            championsPoints: {
+              atk: 32,
+              spe: 32,
+            },
+          },
+        }),
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.stats.atk).toBe(139);
+    expect(body.stats.spe).toBe(163);
+  });
+
   test("validates bad calc requests", async () => {
     const response = await createServer().fetch(
       new Request("http://localhost/calc", {
