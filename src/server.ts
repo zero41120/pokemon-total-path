@@ -5,6 +5,7 @@ import { parseBatchCalcRequest, parseCalcRequest, parsePokemonStatsRequest, pars
 import { loadTeam } from "./lib/team";
 import { listChampionsPresets } from "./lib/presets";
 import { resolvePokemonStats } from "./adapters/champions";
+import { scheduleSelfUpdate } from "./lib/self-update";
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {
@@ -36,7 +37,13 @@ function handleError(error: unknown) {
   );
 }
 
-export function createServer(port = Number(Bun.env.PORT ?? 3000)) {
+type CreateServerOptions = {
+  scheduleUpdate?: typeof scheduleSelfUpdate;
+};
+
+export function createServer(port = Number(Bun.env.PORT ?? 3000), options: CreateServerOptions = {}) {
+  const runSelfUpdate = options.scheduleUpdate ?? scheduleSelfUpdate;
+
   return {
     port,
     fetch: async (request: Request) => {
@@ -85,6 +92,18 @@ export function createServer(port = Number(Bun.env.PORT ?? 3000)) {
             result,
             formatted: formatScenario(scenarioRequest, result),
           });
+        }
+
+        if (request.method === "GET" && url.pathname === "/gitpull") {
+          const update = runSelfUpdate();
+          return json(
+            {
+              ok: true,
+              message: "Self-update scheduled",
+              pid: update.pid,
+            },
+            202,
+          );
         }
 
         return json({ error: "Not found" }, 404);
