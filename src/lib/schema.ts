@@ -165,8 +165,8 @@ export function parseCalcRequest(value: unknown, _index?: number): CalcRequest {
 }
 
 export function parseCalcRequests(value: unknown): CalcRequest[] {
-  if (!Array.isArray(value)) {
-    throw new ValidationError("Expected array of calc requests");
+  if (!isPlainObject(value) || !Array.isArray((value as Record<string, unknown>).calcs)) {
+    throw new ValidationError("Expected { calcs: [] } body");
   }
-  return value.map((request, index) => parseCalcRequest(request, index));
+  return (value as { calcs: unknown[] }).calcs.map((request, index) => parseCalcRequest(request, index));
 }

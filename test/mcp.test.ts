@@ -40,21 +40,15 @@ describe("mcp wrapper", () => {
       });
     });
 
-    const result = await proxyRestEndpoint("http://127.0.0.1:3000", REST_ENDPOINTS[0], [
-      {
-        attacker: {
-          species: "Umbreon",
-          championsPoints: { hp: 32, def: 32 },
-          nature: "Bold",
+    const result = await proxyRestEndpoint("http://127.0.0.1:3000", REST_ENDPOINTS[0], {
+      calcs: [
+        {
+          attacker: { species: "Umbreon", championsPoints: { hp: 32, def: 32 }, nature: "Bold" },
+          defender: { species: "Incineroar", championsPoints: { hp: 32, def: 32 }, nature: "Bold" },
+          move: "Foul Play",
         },
-        defender: {
-          species: "Incineroar",
-          championsPoints: { hp: 32, def: 32 },
-          nature: "Bold",
-        },
-        move: "Foul Play",
-      },
-    ]);
+      ],
+    });
 
     expect(result).toEqual({
       ok: true,

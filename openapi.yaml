@@ -3,8 +3,8 @@ info:
   title: Pokemon Champions Calc API
   version: 0.1.0
   description: >
-    Two endpoints. POST /calc accepts an array of CalcRequest objects and
-    returns damage results. Each combatant requires species plus either exact
+    Two endpoints. POST /calc accepts { calcs: CalcRequest[] } and returns
+    damage results. Each combatant requires species plus either exact
     stats or championsPoints (Champions point allocation, max 66 total, each
     point multiplies EVs by 8). GET /pokemon/stats/{name} resolves any species
     by name and returns base stats and computed level 50 stats with 31 IVs and
@@ -22,9 +22,13 @@ paths:
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/CalcRequest"
+              type: object
+              required: [calcs]
+              properties:
+                calcs:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/CalcRequest"
       responses:
         "200":
           description: Calc results

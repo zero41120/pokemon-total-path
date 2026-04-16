@@ -22,7 +22,7 @@ describe("server", () => {
     const response = await createServer().fetch(
       new Request("http://localhost/calc", {
         method: "POST",
-        body: JSON.stringify("not an array"),
+        body: JSON.stringify({ calcs: "not an array" }),
         headers: {
           "content-type": "application/json",
         },
