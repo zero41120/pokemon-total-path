@@ -253,6 +253,10 @@ export async function proxyRestEndpoint(baseUrl: string, endpoint: RestEndpoint,
 }
 
 function toToolResult(endpoint: RestEndpoint, result: unknown) {
+  const structuredContent = (result && typeof result === "object" && !Array.isArray(result))
+    ? result as Record<string, unknown>
+    : { result };
+
   return {
     content: [
       {
@@ -260,7 +264,7 @@ function toToolResult(endpoint: RestEndpoint, result: unknown) {
         text: `${endpoint.method} ${endpoint.path}\n${JSON.stringify(result, null, 2)}`,
       },
     ],
-    structuredContent: result,
+    structuredContent,
   };
 }
 
