@@ -1,7 +1,7 @@
+import { Generations, Stats, toID } from "@smogon/calc";
 import { AppError, ValidationError } from "../lib/errors";
 import type { CombatantInput, ExactStats } from "../lib/schema";
 import { createExactStatPokemon, type AdaptedPokemonInput } from "./smogon";
-import { Generations, Stats, toID } from "@smogon/calc";
 
 const GEN = Generations.get(9);
 const CHAMPIONS_IV = 31;
@@ -125,5 +125,6 @@ export async function resolvePokemonStats(speciesName: string) {
     name: speciesName,
     species: speciesName,
     stats,
+    note: "IV are always 31 and is included in the stats field."
   };
 }
