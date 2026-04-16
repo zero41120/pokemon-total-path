@@ -15,7 +15,7 @@ afterEach(() => {
 describe("mcp wrapper", () => {
   test("registers one MCP tool per REST endpoint", () => {
     expect(REST_ENDPOINTS.map((endpoint) => endpoint.toolName)).toEqual([
-      "run_calc",
+      "calc",
       "get_pokemon_stats",
     ]);
     expect(REST_ENDPOINTS[1].path).toBe("/pokemon/stats/{name}");
