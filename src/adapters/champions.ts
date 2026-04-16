@@ -124,7 +124,6 @@ export async function resolvePokemonStats(speciesName: string) {
   return {
     name: speciesName,
     species: speciesName,
-    baseStats: species.baseStats,
     stats,
   };
 }

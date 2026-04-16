@@ -9,7 +9,6 @@ describe("server", () => {
     const body = await response.json();
     expect(response.status).toBe(200);
     expect(body.stats.hp).toBeGreaterThan(0);
-    expect(body.baseStats).toBeDefined();
   });
 
   test("returns 404 for unknown species", async () => {

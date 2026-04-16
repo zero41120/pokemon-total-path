@@ -56,8 +56,6 @@ type OpenApiDocument = {
   };
 };
 
-export const OPENAPI_RESOURCE_URI = "openapi://pokemon-tools/spec";
-
 export type RestEndpoint = {
   toolName: string;
   title: string;
@@ -223,8 +221,6 @@ export const REST_ENDPOINTS: RestEndpoint[] = Object.entries(OPENAPI_DOCUMENT.pa
   });
 });
 
-export const BOOTSTRAP_TOOL_NAME = "bootstrap";
-
 function toAbsoluteUrl(baseUrl: string, path: string) {
   return new URL(path, baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`).toString();
 }
@@ -268,22 +264,6 @@ function toToolResult(endpoint: RestEndpoint, result: unknown) {
   };
 }
 
-export function createBootstrapToolResult() {
-  return {
-    content: [
-      {
-        type: "text" as const,
-        text: OPENAPI_YAML,
-      },
-    ],
-    structuredContent: {
-      uri: OPENAPI_RESOURCE_URI,
-      mimeType: "application/yaml",
-      text: OPENAPI_YAML,
-    },
-  };
-}
-
 export function createMcpWrapperServer(restBaseUrl: string) {
   const server = new McpServer(
     {
@@ -295,35 +275,6 @@ export function createMcpWrapperServer(restBaseUrl: string) {
         logging: {},
       },
     },
-  );
-
-  server.registerResource(
-    "openapi-spec",
-    OPENAPI_RESOURCE_URI,
-    {
-      title: "OpenAPI Spec",
-      description: "Raw YAML OpenAPI contract for the Pokemon Champions Calc API.",
-      mimeType: "application/yaml",
-    },
-    async () => ({
-      contents: [
-        {
-          uri: OPENAPI_RESOURCE_URI,
-          mimeType: "application/yaml",
-          text: OPENAPI_YAML,
-        },
-      ],
-    }),
-  );
-
-  server.registerTool(
-    BOOTSTRAP_TOOL_NAME,
-    {
-      title: "Bootstrap",
-      description: "Bootstraps the client with the raw OpenAPI YAML contract for this API before using other tools.",
-      inputSchema: z.object({}),
-    },
-    async () => createBootstrapToolResult(),
   );
 
   for (const endpoint of REST_ENDPOINTS) {

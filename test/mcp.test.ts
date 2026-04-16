@@ -1,10 +1,7 @@
 import { afterEach, describe, expect, mock, test } from "bun:test";
 import {
-  BOOTSTRAP_TOOL_NAME,
-  OPENAPI_RESOURCE_URI,
   OPENAPI_YAML,
   REST_ENDPOINTS,
-  createBootstrapToolResult,
   proxyRestEndpoint,
   startMcpServer,
 } from "../src/mcp";
@@ -22,30 +19,12 @@ describe("mcp wrapper", () => {
       "get_pokemon_stats",
     ]);
     expect(REST_ENDPOINTS[1].path).toBe("/pokemon/stats/{name}");
-    expect(BOOTSTRAP_TOOL_NAME).toBe("bootstrap");
   });
 
-  test("exposes the OpenAPI spec as an MCP resource payload", () => {
-    expect(OPENAPI_RESOURCE_URI).toBe("openapi://pokemon-tools/spec");
+  test("exposes the OpenAPI YAML", () => {
     expect(OPENAPI_YAML).toContain("openapi: 3.1.0");
     expect(OPENAPI_YAML).toContain("title: Pokemon Champions Calc API");
     expect(OPENAPI_YAML).toContain("/calc:");
-  });
-
-  test("returns the OpenAPI spec through the bootstrap tool", async () => {
-    expect(createBootstrapToolResult()).toEqual({
-      content: [
-        {
-          type: "text",
-          text: OPENAPI_YAML,
-        },
-      ],
-      structuredContent: {
-        uri: OPENAPI_RESOURCE_URI,
-        mimeType: "application/yaml",
-        text: OPENAPI_YAML,
-      },
-    });
   });
 
   test("proxies JSON requests to the REST server", async () => {
