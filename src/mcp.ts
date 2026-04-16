@@ -23,10 +23,18 @@ type OpenApiSchema = {
   maxLength?: number;
 };
 
+type OpenApiParameter = {
+  name: string;
+  in: "path" | "query" | "header";
+  required?: boolean;
+  schema?: OpenApiSchema;
+};
+
 type OpenApiOperation = {
   operationId?: string;
   summary?: string;
   description?: string;
+  parameters?: OpenApiParameter[];
   requestBody?: {
     required?: boolean;
     content?: {
@@ -171,13 +179,24 @@ function openApiSchemaToZod(definition: OpenApiSchema | undefined, document: Ope
   }
 }
 
-function requestBodySchema(operation: OpenApiOperation, document: OpenApiDocument) {
-  const schema = operation.requestBody?.content?.["application/json"]?.schema;
-  if (!schema) {
-    return z.object({});
+function operationInputSchema(operation: OpenApiOperation, document: OpenApiDocument) {
+  const bodySchema = operation.requestBody?.content?.["application/json"]?.schema;
+  if (bodySchema) {
+    return openApiSchemaToZod(bodySchema, document);
   }
 
-  return openApiSchemaToZod(schema, document);
+  const pathParams = (operation.parameters ?? []).filter((p) => p.in === "path");
+  if (pathParams.length > 0) {
+    const shape = Object.fromEntries(
+      pathParams.map((p) => {
+        const schema = openApiSchemaToZod(p.schema, document);
+        return [p.name, p.required ? schema : schema.optional()];
+      }),
+    );
+    return z.object(shape);
+  }
+
+  return z.object({});
 }
 
 const OPENAPI_DOCUMENT = loadOpenApiDocument();
@@ -198,7 +217,7 @@ export const REST_ENDPOINTS: RestEndpoint[] = Object.entries(OPENAPI_DOCUMENT.pa
         description: operation.description ?? operation.summary ?? `${upperMethod} ${path}`,
         method: upperMethod,
         path,
-        inputSchema: requestBodySchema(operation, OPENAPI_DOCUMENT),
+        inputSchema: operationInputSchema(operation, OPENAPI_DOCUMENT),
       },
     ];
   });
@@ -220,7 +239,9 @@ async function parseRestResponse(response: globalThis.Response) {
 }
 
 export async function proxyRestEndpoint(baseUrl: string, endpoint: RestEndpoint, body?: unknown) {
-  const response = await fetch(toAbsoluteUrl(baseUrl, endpoint.path), {
+  const params = (body && typeof body === "object" && !Array.isArray(body)) ? body as Record<string, unknown> : {};
+  const resolvedPath = endpoint.path.replace(/\{(\w+)\}/g, (_, key) => encodeURIComponent(String(params[key] ?? "")));
+  const response = await fetch(toAbsoluteUrl(baseUrl, resolvedPath), {
     method: endpoint.method,
     headers: endpoint.method === "POST" ? { "content-type": "application/json" } : undefined,
     body: endpoint.method === "POST" ? JSON.stringify(body ?? {}) : undefined,
@@ -229,7 +250,7 @@ export async function proxyRestEndpoint(baseUrl: string, endpoint: RestEndpoint,
   const result = await parseRestResponse(response);
   if (!response.ok) {
     const details = typeof result === "string" ? result : JSON.stringify(result, null, 2);
-    throw new Error(`${endpoint.method} ${endpoint.path} failed with ${response.status}: ${details}`);
+    throw new Error(`${endpoint.method} ${resolvedPath} failed with ${response.status}: ${details}`);
   }
 
   return result;

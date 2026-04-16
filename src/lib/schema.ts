@@ -5,31 +5,9 @@ export type StatID = "hp" | "atk" | "def" | "spa" | "spd" | "spe";
 export type ExactStats = Record<StatID, number>;
 export type ChampionsPoints = Partial<Record<StatID, number>>;
 
-export type TeamPokemon = {
-  name: string;
-  species: string;
-  baseSpecies?: string;
-  item?: string;
-  ability?: string;
-  megaAbility?: string;
-  level: number;
-  stats: ExactStats;
-  moves: string[];
-  description?: string;
-  breakConditions?: string[];
-};
-
-export type TeamFile = {
-  teamName: string;
-  format: string;
-  notes?: string[];
-  pokemon: TeamPokemon[];
-};
-
 export type CombatantInput = {
-  teamSlot?: string;
   name?: string;
-  species?: string;
+  species: string;
   baseSpecies?: string;
   level?: number;
   item?: string;
@@ -38,7 +16,6 @@ export type CombatantInput = {
   moves?: string[];
   stats?: ExactStats;
   championsPoints?: ChampionsPoints;
-  championsPreset?: string;
   nature?: string;
   currentHP?: number;
   boosts?: Partial<Record<Exclude<StatID, "hp">, number>>;
@@ -69,23 +46,6 @@ export type CalcRequest = {
   defender: CombatantInput;
   move: string;
   field?: CalcField;
-  notes?: string[];
-  branches?: string[];
-};
-
-export type BatchCalcRequest = {
-  requests: CalcRequest[];
-};
-
-export type ScenarioRequest = {
-  scenario: string;
-  calc: CalcRequest;
-  turnActions?: string[];
-  fieldStateNotes?: string[];
-};
-
-export type PokemonStatsRequest = {
-  pokemon: CombatantInput;
 };
 
 const STAT_IDS: StatID[] = ["hp", "atk", "def", "spa", "spd", "spe"];
@@ -146,10 +106,14 @@ export function parseCombatant(value: unknown, field: string): CombatantInput {
     throw new ValidationError(`Expected object for ${field}`);
   }
 
-  const combatant: CombatantInput = {};
-  if (value.teamSlot !== undefined) combatant.teamSlot = assertString(value.teamSlot, `${field}.teamSlot`);
+  if (!value.species) {
+    throw new ValidationError(`${field} must include species`);
+  }
+
+  const combatant: CombatantInput = {
+    species: assertString(value.species, `${field}.species`),
+  };
   if (value.name !== undefined) combatant.name = assertString(value.name, `${field}.name`);
-  if (value.species !== undefined) combatant.species = assertString(value.species, `${field}.species`);
   if (value.baseSpecies !== undefined) combatant.baseSpecies = assertString(value.baseSpecies, `${field}.baseSpecies`);
   if (value.level !== undefined) {
     if (typeof value.level !== "number" || !Number.isFinite(value.level)) {
@@ -170,12 +134,7 @@ export function parseCombatant(value: unknown, field: string): CombatantInput {
   if (value.championsPoints !== undefined) {
     combatant.championsPoints = parseChampionsPoints(value.championsPoints, `${field}.championsPoints`);
   }
-  if (value.championsPreset !== undefined) {
-    combatant.championsPreset = assertString(value.championsPreset, `${field}.championsPreset`);
-  }
-  if (value.nature !== undefined) {
-    combatant.nature = assertString(value.nature, `${field}.nature`);
-  }
+  if (value.nature !== undefined) combatant.nature = assertString(value.nature, `${field}.nature`);
   if (value.currentHP !== undefined) {
     if (typeof value.currentHP !== "number" || !Number.isFinite(value.currentHP) || value.currentHP <= 0) {
       throw new ValidationError(`Expected positive number for ${field}.currentHP`);
@@ -185,29 +144,14 @@ export function parseCombatant(value: unknown, field: string): CombatantInput {
   if (value.status !== undefined) combatant.status = assertString(value.status, `${field}.status`);
   if (value.teraType !== undefined) combatant.teraType = assertString(value.teraType, `${field}.teraType`);
 
-  if (!combatant.teamSlot && !combatant.species) {
-    throw new ValidationError(`${field} must include either teamSlot or species`);
-  }
-  if (!combatant.teamSlot && !combatant.stats && !combatant.championsPoints && !combatant.championsPreset) {
-    throw new ValidationError(
-      `${field} inline combatants require stats, championsPoints, or championsPreset`,
-    );
+  if (!combatant.stats && !combatant.championsPoints) {
+    throw new ValidationError(`${field} requires stats or championsPoints`);
   }
 
   return combatant;
 }
 
-export function parsePokemonStatsRequest(value: unknown): PokemonStatsRequest {
-  if (!isPlainObject(value)) {
-    throw new ValidationError("Expected request body object");
-  }
-
-  return {
-    pokemon: parseCombatant(value.pokemon, "pokemon"),
-  };
-}
-
-export function parseCalcRequest(value: unknown): CalcRequest {
+export function parseCalcRequest(value: unknown, _index?: number): CalcRequest {
   if (!isPlainObject(value)) {
     throw new ValidationError("Expected request body object");
   }
@@ -217,35 +161,12 @@ export function parseCalcRequest(value: unknown): CalcRequest {
     defender: parseCombatant(value.defender, "defender"),
     move: assertString(value.move, "move"),
     field: isPlainObject(value.field) ? (value.field as CalcField) : undefined,
-    notes: Array.isArray(value.notes) ? value.notes.map((note, index) => assertString(note, `notes[${index}]`)) : undefined,
-    branches: Array.isArray(value.branches)
-      ? value.branches.map((branch, index) => assertString(branch, `branches[${index}]`))
-      : undefined,
   };
 }
 
-export function parseBatchCalcRequest(value: unknown): BatchCalcRequest {
-  if (!isPlainObject(value) || !Array.isArray(value.requests)) {
-    throw new ValidationError("Expected { requests: [] } body");
+export function parseCalcRequests(value: unknown): CalcRequest[] {
+  if (!Array.isArray(value)) {
+    throw new ValidationError("Expected array of calc requests");
   }
-  return {
-    requests: value.requests.map((request) => parseCalcRequest(request)),
-  };
-}
-
-export function parseScenarioRequest(value: unknown): ScenarioRequest {
-  if (!isPlainObject(value)) {
-    throw new ValidationError("Expected scenario request body object");
-  }
-
-  return {
-    scenario: assertString(value.scenario, "scenario"),
-    calc: parseCalcRequest(value.calc),
-    turnActions: Array.isArray(value.turnActions)
-      ? value.turnActions.map((line, index) => assertString(line, `turnActions[${index}]`))
-      : undefined,
-    fieldStateNotes: Array.isArray(value.fieldStateNotes)
-      ? value.fieldStateNotes.map((line, index) => assertString(line, `fieldStateNotes[${index}]`))
-      : undefined,
-  };
+  return value.map((request, index) => parseCalcRequest(request, index));
 }

@@ -1,9 +1,6 @@
 import { AppError, ValidationError } from "./lib/errors";
-import { runBatch, runCalc } from "./lib/calc";
-import { formatScenario } from "./lib/format";
-import { parseBatchCalcRequest, parseCalcRequest, parsePokemonStatsRequest, parseScenarioRequest } from "./lib/schema";
-import { loadTeam } from "./lib/team";
-import { listChampionsPresets } from "./lib/presets";
+import { runBatch } from "./lib/calc";
+import { parseCalcRequests } from "./lib/schema";
 import { resolvePokemonStats } from "./adapters/champions";
 import { scheduleSelfUpdate } from "./lib/self-update";
 
@@ -50,48 +47,15 @@ export function createServer(port = Number(Bun.env.PORT ?? 3000), options: Creat
       const url = new URL(request.url);
 
       try {
-        if (request.method === "GET" && url.pathname === "/health") {
-          return json({
-            ok: true,
-            service: "pokemon-champions-calc",
-          });
-        }
-
-        if (request.method === "GET" && url.pathname === "/team") {
-          return json(await loadTeam());
-        }
-
-        if (request.method === "GET" && url.pathname === "/presets") {
-          return json({
-            championsPresets: listChampionsPresets(),
-          });
-        }
-
         if (request.method === "POST" && url.pathname === "/calc") {
           const body = await parseRequestBody(request);
-          return json(await runCalc(parseCalcRequest(body)));
+          return json(await runBatch(parseCalcRequests(body)));
         }
 
-        if (request.method === "POST" && url.pathname === "/pokemon/stats") {
-          const body = await parseRequestBody(request);
-          return json(await resolvePokemonStats(parsePokemonStatsRequest(body).pokemon));
-        }
-
-        if (request.method === "POST" && url.pathname === "/calc/batch") {
-          const body = await parseRequestBody(request);
-          return json({
-            results: await runBatch(parseBatchCalcRequest(body)),
-          });
-        }
-
-        if (request.method === "POST" && url.pathname === "/scenario/run") {
-          const body = await parseRequestBody(request);
-          const scenarioRequest = parseScenarioRequest(body);
-          const result = await runCalc(scenarioRequest.calc);
-          return json({
-            result,
-            formatted: formatScenario(scenarioRequest, result),
-          });
+        if (request.method === "GET" && url.pathname.startsWith("/pokemon/stats/")) {
+          const name = decodeURIComponent(url.pathname.slice("/pokemon/stats/".length));
+          if (!name) return json({ error: "Not found" }, 404);
+          return json(await resolvePokemonStats(name));
         }
 
         if (request.method === "GET" && url.pathname === "/gitpull") {

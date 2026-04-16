@@ -18,14 +18,10 @@ afterEach(() => {
 describe("mcp wrapper", () => {
   test("registers one MCP tool per REST endpoint", () => {
     expect(REST_ENDPOINTS.map((endpoint) => endpoint.toolName)).toEqual([
-      "get_health",
-      "get_team",
-      "get_presets",
       "run_calc",
       "get_pokemon_stats",
-      "run_batch_calc",
-      "run_scenario",
     ]);
+    expect(REST_ENDPOINTS[1].path).toBe("/pokemon/stats/{name}");
     expect(BOOTSTRAP_TOOL_NAME).toBe("bootstrap");
   });
 
@@ -65,17 +61,21 @@ describe("mcp wrapper", () => {
       });
     });
 
-    const result = await proxyRestEndpoint("http://127.0.0.1:3000", REST_ENDPOINTS[3], {
-      attacker: {
-        species: "Umbreon",
-        championsPreset: "fully_physical_defensive",
+    const result = await proxyRestEndpoint("http://127.0.0.1:3000", REST_ENDPOINTS[0], [
+      {
+        attacker: {
+          species: "Umbreon",
+          championsPoints: { hp: 32, def: 32 },
+          nature: "Bold",
+        },
+        defender: {
+          species: "Incineroar",
+          championsPoints: { hp: 32, def: 32 },
+          nature: "Bold",
+        },
+        move: "Foul Play",
       },
-      defender: {
-        species: "Incineroar",
-        championsPreset: "fully_physical_defensive",
-      },
-      move: "Foul Play",
-    });
+    ]);
 
     expect(result).toEqual({
       ok: true,
@@ -94,7 +94,7 @@ describe("mcp wrapper", () => {
     );
 
     await expect(proxyRestEndpoint("http://127.0.0.1:3000", REST_ENDPOINTS[0])).rejects.toThrow(
-      "GET /health failed with 400",
+      "POST /calc failed with 400",
     );
   });
 

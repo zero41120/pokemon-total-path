@@ -3,96 +3,46 @@ info:
   title: Pokemon Champions Calc API
   version: 0.1.0
   description: >
-    Local Bun HTTP API for running Pokemon Champions doubles calculations with
-    exact level 50 stat overrides on top of Gen 9 Smogon calc logic.
+    Two endpoints. POST /calc accepts an array of CalcRequest objects and
+    returns damage results. Each combatant requires species plus either exact
+    stats or championsPoints (Champions point allocation, max 66 total, each
+    point multiplies EVs by 8). GET /pokemon/stats/{name} resolves any species
+    by name and returns base stats and computed level 50 stats with 31 IVs and
+    no investment, useful for looking up a pokemon before building a calc
+    request.
 servers:
   - url: https://zero41120pokemontools.com
 paths:
-  /health:
-    get:
-      operationId: getHealth
-      summary: Health check
-      responses:
-        "200":
-          description: Service is healthy
-  /team:
-    get:
-      operationId: getTeam
-      summary: Get the saved team
-      responses:
-        "200":
-          description: Team payload
-  /presets:
-    get:
-      operationId: getPresets
-      summary: Get supported Champions EV presets
-      responses:
-        "200":
-          description: Preset payload
   /calc:
     post:
       operationId: runCalc
-      summary: Run a single calc
+      summary: Run one or more calcs
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CalcRequest"
+              type: array
+              items:
+                $ref: "#/components/schemas/CalcRequest"
       responses:
         "200":
-          description: Calc result
+          description: Calc results
         "400":
           description: Validation error
-  /pokemon/stats:
-    post:
+  /pokemon/stats/{name}:
+    get:
       operationId: getPokemonStats
-      summary: Resolve a Pokemon into final level 50 stats
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [pokemon]
-              properties:
-                pokemon:
-                  $ref: "#/components/schemas/CombatantInput"
+      summary: Resolve a team member into final level 50 stats
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: Resolved stat payload
-  /calc/batch:
-    post:
-      operationId: runBatchCalc
-      summary: Run a batch of calcs
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [requests]
-              properties:
-                requests:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/CalcRequest"
-      responses:
-        "200":
-          description: Batch calc results
-  /scenario/run:
-    post:
-      operationId: runScenario
-      summary: Run a calc and return formatted scenario text
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ScenarioRequest"
-      responses:
-        "200":
-          description: Scenario result
 components:
   schemas:
     ExactStats:
@@ -108,8 +58,6 @@ components:
     CombatantInput:
       type: object
       properties:
-        teamSlot:
-          type: string
         name:
           type: string
         species:
@@ -139,8 +87,6 @@ components:
             spa: { type: integer }
             spd: { type: integer }
             spe: { type: integer }
-        championsPreset:
-          type: string
         nature:
           type: string
         currentHP:
@@ -183,27 +129,3 @@ components:
           type: string
         field:
           $ref: "#/components/schemas/CalcField"
-        notes:
-          type: array
-          items:
-            type: string
-        branches:
-          type: array
-          items:
-            type: string
-    ScenarioRequest:
-      type: object
-      required: [scenario, calc]
-      properties:
-        scenario:
-          type: string
-        calc:
-          $ref: "#/components/schemas/CalcRequest"
-        turnActions:
-          type: array
-          items:
-            type: string
-        fieldStateNotes:
-          type: array
-          items:
-            type: string

@@ -1,7 +1,32 @@
-import type { BatchCalcRequest, CalcRequest } from "./schema";
-import { buildEndState } from "./state";
+import type { CalcRequest, ExactStats, ChampionsPoints } from "./schema";
 import { createField, createMove, runSmogonCalc } from "../adapters/smogon";
 import { toCalcPokemon } from "../adapters/champions";
+
+const STAT_ORDER = ["hp", "atk", "def", "spa", "spd", "spe"] as const;
+
+const NATURE_MODIFIERS: Record<string, { plus: string; minus: string }> = {
+  Lonely: { plus: "atk", minus: "def" }, Brave: { plus: "atk", minus: "spe" },
+  Adamant: { plus: "atk", minus: "spa" }, Naughty: { plus: "atk", minus: "spd" },
+  Bold: { plus: "def", minus: "atk" }, Relaxed: { plus: "def", minus: "spe" },
+  Impish: { plus: "def", minus: "spa" }, Lax: { plus: "def", minus: "spd" },
+  Timid: { plus: "spe", minus: "atk" }, Hasty: { plus: "spe", minus: "def" },
+  Jolly: { plus: "spe", minus: "spa" }, Naive: { plus: "spe", minus: "spd" },
+  Modest: { plus: "spa", minus: "atk" }, Mild: { plus: "spa", minus: "def" },
+  Quiet: { plus: "spa", minus: "spe" }, Rash: { plus: "spa", minus: "spd" },
+  Calm: { plus: "spd", minus: "atk" }, Gentle: { plus: "spd", minus: "def" },
+  Sassy: { plus: "spd", minus: "spe" }, Careful: { plus: "spd", minus: "spa" },
+};
+
+function formatStats(stats: ExactStats, nature?: string | null, championsPoints?: ChampionsPoints | null) {
+  const mods = nature ? NATURE_MODIFIERS[nature] : undefined;
+  const statsStr = STAT_ORDER.map((s) => {
+    const suffix = mods?.plus === s ? "+" : mods?.minus === s ? "-" : "";
+    return `${stats[s]}${suffix}`;
+  }).join("/");
+  if (!championsPoints) return statsStr;
+  const cpStr = STAT_ORDER.map((s) => championsPoints[s] ?? 0).join("/");
+  return `${statsStr} [${cpStr}]`;
+}
 
 function toPercent(value: number, hp: number) {
   return Number(((value / hp) * 100).toFixed(1));
@@ -61,19 +86,6 @@ function buildResolvedDescription(
   return `${offensiveValue} ${offensiveLabel} ${attackerName} ${moveName} vs. ${defenderStats.hp} HP / ${defensiveValue} ${defensiveLabel} ${defenderName}: ${damageRange[0]}-${damageRange[1]} (${percentMin} - ${percentMax}%)`;
 }
 
-function buildSpeedSummary(attackerSpe: number, defenderSpe: number, field?: CalcRequest["field"]) {
-  const attackerTailwind = field?.attackerSide?.tailwind ? 2 : 1;
-  const defenderTailwind = field?.defenderSide?.tailwind ? 2 : 1;
-  const attackerEffective = attackerSpe * attackerTailwind;
-  const defenderEffective = defenderSpe * defenderTailwind;
-
-  return {
-    attacker: attackerEffective,
-    defender: defenderEffective,
-    attackerMovesFirst: attackerEffective > defenderEffective,
-    speedTie: attackerEffective === defenderEffective,
-  };
-}
 
 export async function runCalc(request: CalcRequest) {
   const attacker = await toCalcPokemon(request.attacker);
@@ -93,7 +105,6 @@ export async function runCalc(request: CalcRequest) {
   const damageRange = result.range();
   const defenderHP = defender.resolved.stats.hp;
   const ko = describeKo(damageRange, defenderHP);
-  const speed = buildSpeedSummary(attacker.resolved.stats.spe, defender.resolved.stats.spe, request.field);
   const resolvedDescription = buildResolvedDescription(
     attacker.resolved.displayName,
     attacker.resolved.stats,
@@ -104,45 +115,19 @@ export async function runCalc(request: CalcRequest) {
     damageRange,
   );
 
-  const notes = [
-    ...attacker.resolved.notes,
-    ...defender.resolved.notes,
-    ...(forcedWeather
-      ? [`Weather was forced to ${forcedWeather} because Mega Sol ignores all other weather for this calculation.`]
-      : []),
-    ...(request.notes ?? []),
-  ];
-
   return {
-    input: request,
+    description: `${resolvedDescription} -- ${ko}`,
     attacker: {
       name: attacker.resolved.displayName,
-      species: attacker.resolved.calcSpecies,
-      stats: attacker.resolved.stats,
-      source: attacker.resolved.source,
-      championsPoints: attacker.resolved.championsPoints ?? null,
-      nature: attacker.resolved.nature ?? null,
-      item: attacker.resolved.item,
+      stats: formatStats(attacker.resolved.stats, attacker.resolved.nature, attacker.resolved.championsPoints),
+      item: attacker.resolved.item ?? null,
       ability: attacker.resolved.displayAbility ?? attacker.resolved.ability ?? attacker.resolved.megaAbility ?? null,
     },
     defender: {
       name: defender.resolved.displayName,
-      species: defender.resolved.calcSpecies,
-      stats: defender.resolved.stats,
-      source: defender.resolved.source,
-      championsPoints: defender.resolved.championsPoints ?? null,
-      nature: defender.resolved.nature ?? null,
-      item: defender.resolved.item,
+      stats: formatStats(defender.resolved.stats, defender.resolved.nature, defender.resolved.championsPoints),
+      item: defender.resolved.item ?? null,
       ability: defender.resolved.displayAbility ?? defender.resolved.ability ?? defender.resolved.megaAbility ?? null,
-    },
-    move: request.move,
-    engine: {
-      description: `${resolvedDescription} -- ${ko}`,
-      fullDescription: `${resolvedDescription} -- ${ko}`,
-      libraryDescription: result.desc(),
-      libraryFullDescription: result.fullDesc("px"),
-      damage: result.damage,
-      rawDamageRange: damageRange,
     },
     damage: {
       min: damageRange[0],
@@ -150,25 +135,10 @@ export async function runCalc(request: CalcRequest) {
       percentMin: toPercent(damageRange[0], defenderHP),
       percentMax: toPercent(damageRange[1], defenderHP),
       ko,
-      defenderRemainingHPRange: [
-        Math.max(defenderHP - damageRange[1], 0),
-        Math.max(defenderHP - damageRange[0], 0),
-      ],
-      defenderFaints: damageRange[0] >= defenderHP,
     },
-    speed,
-    branches: request.branches ?? [],
-    endState: buildEndState(
-      {
-        ...request.field,
-        weather: forcedWeather ? forcedWeather.toLowerCase() : request.field?.weather,
-      },
-      forcedWeather ? ["Mega Sol forced sun and ignored other weather."] : [],
-    ),
-    notes,
   };
 }
 
-export async function runBatch(batchRequest: BatchCalcRequest) {
-  return Promise.all(batchRequest.requests.map((request) => runCalc(request)));
+export async function runBatch(requests: CalcRequest[]) {
+  return Promise.all(requests.map((request) => runCalc(request)));
 }

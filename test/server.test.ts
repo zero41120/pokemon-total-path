@@ -2,78 +2,28 @@ import { describe, expect, test } from "bun:test";
 import { createServer } from "../src/server";
 
 describe("server", () => {
-  test("returns health response", async () => {
-    const response = await createServer().fetch(new Request("http://localhost/health"));
-    const body = await response.json();
-    expect(response.status).toBe(200);
-    expect(body.ok).toBe(true);
-  });
-
-  test("returns supported presets", async () => {
-    const response = await createServer().fetch(new Request("http://localhost/presets"));
-    const body = await response.json();
-    expect(response.status).toBe(200);
-    expect(Array.isArray(body.championsPresets)).toBe(true);
-    expect(body.championsPresets.some((preset: { name: string }) => preset.name === "fully_physical_defensive")).toBe(true);
-  });
-
-  test("returns resolved pokemon stats", async () => {
+  test("returns resolved pokemon stats by species name", async () => {
     const response = await createServer().fetch(
-      new Request("http://localhost/pokemon/stats", {
-        method: "POST",
-        body: JSON.stringify({
-          pokemon: {
-            species: "Umbreon",
-            level: 50,
-            championsPreset: "fully_physical_defensive",
-            championsPoints: {
-              spd: 2,
-            },
-          },
-        }),
-        headers: {
-          "content-type": "application/json",
-        },
-      }),
+      new Request("http://localhost/pokemon/stats/Maushold"),
     );
     const body = await response.json();
     expect(response.status).toBe(200);
-    expect(body.source).toBe("champions-points");
     expect(body.stats.hp).toBeGreaterThan(0);
-    expect(body.championsPoints.spd).toBe(2);
+    expect(body.baseStats).toBeDefined();
   });
 
-  test("floors Champions-derived Maushold stats to match in-game values", async () => {
+  test("returns 404 for unknown species", async () => {
     const response = await createServer().fetch(
-      new Request("http://localhost/pokemon/stats", {
-        method: "POST",
-        body: JSON.stringify({
-          pokemon: {
-            species: "Maushold",
-            level: 50,
-            nature: "Adamant",
-            championsPoints: {
-              atk: 32,
-              spe: 32,
-            },
-          },
-        }),
-        headers: {
-          "content-type": "application/json",
-        },
-      }),
+      new Request("http://localhost/pokemon/stats/NotAPokemon"),
     );
-    const body = await response.json();
-    expect(response.status).toBe(200);
-    expect(body.stats.atk).toBe(139);
-    expect(body.stats.spe).toBe(163);
+    expect(response.status).toBe(404);
   });
 
   test("validates bad calc requests", async () => {
     const response = await createServer().fetch(
       new Request("http://localhost/calc", {
         method: "POST",
-        body: JSON.stringify({}),
+        body: JSON.stringify("not an array"),
         headers: {
           "content-type": "application/json",
         },
