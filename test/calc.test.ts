@@ -108,7 +108,7 @@ describe("calc service", () => {
     });
 
     expect(result.engine.description).toContain("204 Atk Tyranitar");
-    expect(result.engine.description).toContain("179 HP / 174 Def Sinistcha");
+    expect(result.engine.description).toContain("178 HP / 173 Def Sinistcha");
     expect(result.engine.libraryDescription).toContain("0 Atk Tyranitar");
   });
 

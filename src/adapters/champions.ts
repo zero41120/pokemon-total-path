@@ -6,7 +6,7 @@ import { Generations, Stats, toID } from "@smogon/calc";
 import { getChampionsPreset } from "../lib/presets";
 
 const GEN = Generations.get(9);
-const CHAMPIONS_IV = 32;
+const CHAMPIONS_IV = 31;
 
 export type ResolvedCombatant = {
   displayName: string;
