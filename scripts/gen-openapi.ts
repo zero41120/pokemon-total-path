@@ -2,10 +2,34 @@ import * as z from "zod/v4";
 import YAML from "yaml";
 import { REST_ENDPOINTS } from "../src/lib/endpoints";
 
+function normalizeObjectRequiredArrays(schema: unknown): void {
+  if (!schema || typeof schema !== "object") {
+    return;
+  }
+
+  const obj = schema as Record<string, unknown>;
+
+  if (obj.type === "object" && obj.properties && !Array.isArray(obj.required)) {
+    obj.required = [];
+  }
+
+  for (const value of Object.values(obj)) {
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        normalizeObjectRequiredArrays(item);
+      }
+      continue;
+    }
+
+    normalizeObjectRequiredArrays(value);
+  }
+}
+
 const paths: Record<string, unknown> = {};
 
 for (const endpoint of REST_ENDPOINTS) {
   const jsonSchema = z.toJSONSchema(endpoint.inputSchema, { reused: "inline" });
+  normalizeObjectRequiredArrays(jsonSchema);
 
   paths[endpoint.path] = {
     [endpoint.method.toLowerCase()]: {

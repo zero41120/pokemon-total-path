@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { REST_ENDPOINTS, startMcpServer } from "../src/mcp";
+import * as z from "zod/v4";
 
 const originalFetch = globalThis.fetch;
 
@@ -19,6 +20,21 @@ describe("mcp wrapper", () => {
     expect(calc!.method).toBe("POST");
     expect(calc!.path).toBe("/calc");
     expect(calc!.inputSchema).toBeDefined();
+  });
+
+  test("calc schema keeps optional advanced params optional in generated JSON Schema", () => {
+    const calc = REST_ENDPOINTS.find((e) => e.toolName === "calc");
+    const schema = z.toJSONSchema(calc!.inputSchema, { reused: "inline" }) as {
+      properties: {
+        attacker: { required?: string[] };
+        defender: { required?: string[] };
+        move: { required?: string[] };
+      };
+    };
+
+    expect(schema.properties.attacker.required).toEqual(["name"]);
+    expect(schema.properties.defender.required).toEqual(["name"]);
+    expect(schema.properties.move.required).toEqual(["name"]);
   });
 
   test("acknowledges notifications/initialized", async () => {

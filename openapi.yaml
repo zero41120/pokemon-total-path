@@ -67,6 +67,7 @@ paths:
                           minimum: 0
                           maximum: 252
                       additionalProperties: false
+                      required: []
                     boosts:
                       type: object
                       properties:
@@ -91,6 +92,7 @@ paths:
                           minimum: -6
                           maximum: 6
                       additionalProperties: false
+                      required: []
                     optionalParameterIgnoreUnlessNecessary:
                       type: object
                       properties:
@@ -167,6 +169,7 @@ paths:
                                   minimum: 1
                                   maximum: 9007199254740991
                               additionalProperties: false
+                              required: []
                             - type: "null"
                         teraType:
                           type: string
@@ -177,6 +180,7 @@ paths:
                           minimum: 0
                           maximum: 10
                       additionalProperties: false
+                      required: []
                   required:
                     - name
                   additionalProperties: false
@@ -219,6 +223,7 @@ paths:
                           minimum: 0
                           maximum: 252
                       additionalProperties: false
+                      required: []
                     boosts:
                       type: object
                       properties:
@@ -243,6 +248,7 @@ paths:
                           minimum: -6
                           maximum: 6
                       additionalProperties: false
+                      required: []
                     optionalParameterIgnoreUnlessNecessary:
                       type: object
                       properties:
@@ -319,6 +325,7 @@ paths:
                                   minimum: 1
                                   maximum: 9007199254740991
                               additionalProperties: false
+                              required: []
                             - type: "null"
                         teraType:
                           type: string
@@ -329,6 +336,7 @@ paths:
                           minimum: 0
                           maximum: 10
                       additionalProperties: false
+                      required: []
                   required:
                     - name
                   additionalProperties: false
@@ -361,6 +369,7 @@ paths:
                           minimum: 1
                           maximum: 9007199254740991
                       additionalProperties: false
+                      required: []
                   required:
                     - name
                   additionalProperties: false
@@ -460,6 +469,7 @@ paths:
                             - out
                             - in
                       additionalProperties: false
+                      required: []
                     defenderSide:
                       type: object
                       properties:
@@ -515,7 +525,9 @@ paths:
                             - out
                             - in
                       additionalProperties: false
+                      required: []
                   additionalProperties: false
+                  required: []
               required:
                 - format
                 - attacker
