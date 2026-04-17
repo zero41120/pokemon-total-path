@@ -71,7 +71,7 @@ describe("CalcRequestSchema", () => {
   test("rejects invalid status", () => {
     const result = CalcRequestSchema.safeParse({
       format: "Singles",
-      attacker: { name: "Garchomp", params: { status: "confused" } },
+      attacker: { name: "Garchomp", ignoreableOptionalParameter: { status: "confused" } },
       defender: { name: "Amoonguss" },
       move: { name: "Earthquake" },
     });
@@ -82,7 +82,7 @@ describe("CalcRequestSchema", () => {
     for (const status of ["", "brn", "par", "psn", "tox", "slp", "frz"]) {
       const result = CalcRequestSchema.safeParse({
         format: "Singles",
-        attacker: { name: "Garchomp", params: { status } },
+        attacker: { name: "Garchomp", ignoreableOptionalParameter: { status } },
         defender: { name: "Amoonguss" },
         move: { name: "Earthquake" },
       });
@@ -93,7 +93,7 @@ describe("CalcRequestSchema", () => {
   test("accepts forceStatsValue as null", () => {
     const result = CalcRequestSchema.safeParse({
       format: "Singles",
-      attacker: { name: "Shuckle", params: { forceStatsValue: null } },
+      attacker: { name: "Shuckle", ignoreableOptionalParameter: { forceStatsValue: null } },
       defender: { name: "Garchomp" },
       move: { name: "Tackle" },
     });
@@ -180,7 +180,7 @@ describe("runCalc", () => {
 
   test("crit increases damage range minimum", () => {
     const base = runCalc({ attacker: garchomp, defender: amoonguss, move: { name: "Earthquake" }, format: DOUBLES });
-    const crit = runCalc({ attacker: garchomp, defender: amoonguss, move: { name: "Earthquake", isCrit: true }, format: DOUBLES });
+    const crit = runCalc({ attacker: garchomp, defender: amoonguss, move: { name: "Earthquake", ignoreableOptionalParameter: { isCrit: true } }, format: DOUBLES });
     expect(crit.range[0]).toBeGreaterThan(base.range[0]);
   });
 
@@ -230,8 +230,8 @@ describe("runCalc", () => {
 
   test("non-damaging move returns zero damage range", () => {
     const result = runCalc({
-      attacker: { name: "Amoonguss", params: { ability: "Regenerator" } },
-      defender: { name: "Garchomp", params: { ability: "Rough Skin" } },
+      attacker: { name: "Amoonguss", ignoreableOptionalParameter: { ability: "Regenerator" } },
+      defender: { name: "Garchomp", ignoreableOptionalParameter: { ability: "Rough Skin" } },
       move: { name: "Spore" },
       format: DOUBLES,
     });
@@ -277,7 +277,7 @@ describe("runCalc", () => {
       },
       move: { 
         name: "Population Bomb", 
-        hits: 10 
+        ignoreableOptionalParameter: { hits: 10 }
       }
     });
 
@@ -298,7 +298,7 @@ describe("runCalc", () => {
 describe("forceStatsValue", () => {
   test("forced stat appears with ! in attackerStats", () => {
     const result = runCalc({
-      attacker: { name: "Shuckle", ability: "Contrary", nature: "Brave", evs: { def: 32 }, params: { forceStatsValue: { atk: 230 } } },
+      attacker: { name: "Shuckle", ability: "Contrary", nature: "Brave", evs: { def: 32 }, ignoreableOptionalParameter: { forceStatsValue: { atk: 230 } } },
       defender: { name: "Garchomp", ability: "Rough Skin" },
       move: { name: "Rock Smash" },
       format: DOUBLES,
@@ -314,7 +314,7 @@ describe("forceStatsValue", () => {
       format: DOUBLES,
     });
     const forced = runCalc({
-      attacker: { name: "Shuckle", ability: "Contrary", nature: "Brave", params: { forceStatsValue: { atk: 230 } } },
+      attacker: { name: "Shuckle", ability: "Contrary", nature: "Brave", ignoreableOptionalParameter: { forceStatsValue: { atk: 230 } } },
       defender: { name: "Garchomp", ability: "Rough Skin" },
       move: { name: "Rock Smash" },
       format: DOUBLES,
@@ -324,7 +324,7 @@ describe("forceStatsValue", () => {
 
   test("null forceStatsValue is a no-op", () => {
     const base = runCalc({ attacker: garchomp, defender: amoonguss, move: { name: "Earthquake" }, format: DOUBLES });
-    const nullForce = runCalc({ attacker: { ...garchomp, params: { forceStatsValue: null } }, defender: amoonguss, move: { name: "Earthquake" }, format: DOUBLES });
+    const nullForce = runCalc({ attacker: { ...garchomp, ignoreableOptionalParameter: { forceStatsValue: null } }, defender: amoonguss, move: { name: "Earthquake" }, format: DOUBLES });
     expect(nullForce.range).toEqual(base.range);
   });
 });

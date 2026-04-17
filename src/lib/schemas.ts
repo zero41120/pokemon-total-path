@@ -19,7 +19,7 @@ export const BoostsSchema = z.object({
   spe: z.number().int().min(-6).max(6).optional(),
 });
 
-export const PokemonParamsSchema = z.object({
+export const PokemonOptionalParamsSchema = z.object({
   abilityOn: z.boolean().optional(),
   gender: z.enum(["M", "F", "N"]).optional(),
   status: z.enum(["", "brn", "par", "psn", "tox", "slp", "frz"]).optional(),
@@ -48,10 +48,12 @@ export const PokemonInputSchema = z.object({
   item: z.string().optional(),
   evs: StatsObjSchema.optional(),
   boosts: BoostsSchema.optional(),
-  params: PokemonParamsSchema.optional(),
+  ignoreableOptionalParameter: PokemonOptionalParamsSchema.optional(),
 });
 
-export const MoveParamsSchema = z.object({
+export const MoveOptionalParamsSchema = z.object({
+  isCrit: z.boolean().optional(),
+  hits: z.number().int().min(1).optional(),
   useZ: z.boolean().optional(),
   useMax: z.boolean().optional(),
   isStellarFirstUse: z.boolean().optional(),
@@ -61,9 +63,7 @@ export const MoveParamsSchema = z.object({
 
 export const MoveInputSchema = z.object({
   name: z.string(),
-  isCrit: z.boolean().optional(),
-  hits: z.number().int().min(1).optional(),
-  params: MoveParamsSchema.optional(),
+  ignoreableOptionalParameter: MoveOptionalParamsSchema.optional(),
 });
 
 export const SideConditionsSchema = z.object({
@@ -120,8 +120,8 @@ export const CalcRequestSchema = z.object({
 
 export type CalcRequest = z.infer<typeof CalcRequestSchema>;
 export type PokemonInput = z.infer<typeof PokemonInputSchema>;
-export type PokemonParams = z.infer<typeof PokemonParamsSchema>;
+export type PokemonOptionalParams = z.infer<typeof PokemonOptionalParamsSchema>;
 export type MoveInput = z.infer<typeof MoveInputSchema>;
-export type MoveParams = z.infer<typeof MoveParamsSchema>;
+export type MoveOptionalParams = z.infer<typeof MoveOptionalParamsSchema>;
 export type FieldInput = z.infer<typeof FieldInputSchema>;
 export type SideInput = z.infer<typeof SideConditionsSchema>;

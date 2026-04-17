@@ -62,7 +62,7 @@ function backCalcBase(target: number, stat: StatID, nm: number): number {
 
 function buildPokemon(genNum: GenerationNum, input: PokemonInput): Pokemon {
   const gen = Generations.get(genNum);
-  const p = input.params ?? {};
+  const p = input.ignoreableOptionalParameter ?? {};
   const resolvedEvs = resolveEvs(input.evs);
   const ivs = STAT_ORDER.reduce((acc, k) => ({ ...acc, [k]: FIXED_IV }), {} as Partial<StatsTable>);
 
@@ -105,13 +105,13 @@ function buildPokemon(genNum: GenerationNum, input: PokemonInput): Pokemon {
 
 function buildMove(genNum: GenerationNum, input: MoveInput): Move {
   const gen = Generations.get(genNum);
-  const p = input.params ?? {};
+  const p = input.ignoreableOptionalParameter ?? {};
   return new Move(gen, input.name, {
-    isCrit: input.isCrit,
+    isCrit: p.isCrit,
     useZ: p.useZ,
     useMax: p.useMax,
     isStellarFirstUse: p.isStellarFirstUse,
-    hits: input.hits,
+    hits: p.hits,
     timesUsed: p.timesUsed,
     timesUsedWithMetronome: p.timesUsedWithMetronome,
   });
@@ -148,7 +148,7 @@ function formatStats(
 ): string {
   const { plus, minus } = getNatureMods(input.nature);
   const pts = toChampPoints(input.evs);
-  const forced = input.params?.forceStatsValue;
+  const forced = input.ignoreableOptionalParameter?.forceStatsValue;
 
   const vals = STAT_ORDER.map((stat) => {
     const v = pokemon.stats[stat];

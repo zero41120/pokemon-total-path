@@ -91,7 +91,7 @@ paths:
                           minimum: -6
                           maximum: 6
                       additionalProperties: false
-                    params:
+                    ignoreableOptionalParameter:
                       type: object
                       properties:
                         abilityOn:
@@ -243,7 +243,7 @@ paths:
                           minimum: -6
                           maximum: 6
                       additionalProperties: false
-                    params:
+                    ignoreableOptionalParameter:
                       type: object
                       properties:
                         abilityOn:
@@ -337,15 +337,15 @@ paths:
                   properties:
                     name:
                       type: string
-                    isCrit:
-                      type: boolean
-                    hits:
-                      type: integer
-                      minimum: 1
-                      maximum: 9007199254740991
-                    params:
+                    ignoreableOptionalParameter:
                       type: object
                       properties:
+                        isCrit:
+                          type: boolean
+                        hits:
+                          type: integer
+                          minimum: 1
+                          maximum: 9007199254740991
                         useZ:
                           type: boolean
                         useMax:
