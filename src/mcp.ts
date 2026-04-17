@@ -3,58 +3,11 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express, { type Request as ExpressRequest, type Response as ExpressResponse } from "express";
 import { readFileSync } from "node:fs";
+import type { OpenAPIObject, OperationObject, ParameterObject, ReferenceObject, SchemaObject } from "openapi3-ts/oas31";
 import YAML from "yaml";
 import * as z from "zod/v4";
 
 type HttpMethod = "GET" | "POST";
-
-type OpenApiSchema = {
-  $ref?: string;
-  type?: string;
-  properties?: Record<string, OpenApiSchema>;
-  items?: OpenApiSchema;
-  required?: string[];
-  enum?: Array<string | number | boolean>;
-  nullable?: boolean;
-  description?: string;
-  minimum?: number;
-  maximum?: number;
-  minLength?: number;
-  maxLength?: number;
-};
-
-type OpenApiParameter = {
-  name: string;
-  in: "path" | "query" | "header";
-  required?: boolean;
-  schema?: OpenApiSchema;
-};
-
-type OpenApiOperation = {
-  operationId?: string;
-  summary?: string;
-  description?: string;
-  parameters?: OpenApiParameter[];
-  requestBody?: {
-    required?: boolean;
-    content?: {
-      "application/json"?: {
-        schema?: OpenApiSchema;
-      };
-    };
-  };
-};
-
-type OpenApiDocument = {
-  info?: {
-    title?: string;
-    version?: string;
-  };
-  paths?: Record<string, Partial<Record<Lowercase<HttpMethod>, OpenApiOperation>>>;
-  components?: {
-    schemas?: Record<string, OpenApiSchema>;
-  };
-};
 
 export type RestEndpoint = {
   toolName: string;
@@ -68,7 +21,7 @@ export type RestEndpoint = {
 const OPENAPI_YAML = readFileSync(new URL("../openapi.yaml", import.meta.url), "utf8");
 
 function loadOpenApiDocument() {
-  return YAML.parse(OPENAPI_YAML) as OpenApiDocument;
+  return YAML.parse(OPENAPI_YAML) as OpenAPIObject;
 }
 
 function toToolName(operationId: string | undefined, method: HttpMethod, path: string) {
@@ -80,9 +33,9 @@ function toToolName(operationId: string | undefined, method: HttpMethod, path: s
     .toLowerCase();
 }
 
-function resolveOpenApiRef(schema: OpenApiSchema, document: OpenApiDocument) {
+function resolveRef(schema: SchemaObject | ReferenceObject, document: OpenAPIObject): SchemaObject {
   if (!schema.$ref) {
-    return schema;
+    return schema as SchemaObject;
   }
 
   const prefix = "#/components/schemas/";
@@ -96,65 +49,47 @@ function resolveOpenApiRef(schema: OpenApiSchema, document: OpenApiDocument) {
     throw new Error(`Missing OpenAPI schema component: ${key}`);
   }
 
-  return resolved;
+  return resolved as SchemaObject;
 }
 
-function withSharedConstraints(schema: z.ZodTypeAny, definition: OpenApiSchema) {
-  let current = schema;
-
-  if (definition.description && "meta" in current && typeof current.meta === "function") {
-    current = current.meta({ description: definition.description });
+function withSharedConstraints(zodSchema: z.ZodTypeAny, definition: SchemaObject) {
+  if (definition.description && "meta" in zodSchema && typeof zodSchema.meta === "function") {
+    return zodSchema.meta({ description: definition.description });
   }
-
-  if (definition.nullable) {
-    current = current.nullable();
-  }
-
-  return current;
+  return zodSchema;
 }
 
-function openApiSchemaToZod(definition: OpenApiSchema | undefined, document: OpenApiDocument): z.ZodTypeAny {
+function openApiSchemaToZod(definition: SchemaObject | ReferenceObject | undefined, document: OpenAPIObject): z.ZodTypeAny {
   if (!definition) {
     return z.unknown();
   }
 
-  const schema = resolveOpenApiRef(definition, document);
+  const schema = resolveRef(definition, document);
 
   if (schema.enum && schema.enum.length > 0) {
-    const literals = schema.enum.map((value) => z.literal(value));
+    const literals = (schema.enum as Array<string | number | boolean>).map((value) => z.literal(value));
     const literalSchema = literals.length === 1 ? literals[0] : z.union(literals as [typeof literals[0], typeof literals[0], ...typeof literals]);
     return withSharedConstraints(literalSchema, schema);
   }
 
-  switch (schema.type) {
+  const type = Array.isArray(schema.type) ? schema.type[0] : schema.type;
+  switch (type) {
     case "string": {
       let result = z.string();
-      if (schema.minLength !== undefined) {
-        result = result.min(schema.minLength);
-      }
-      if (schema.maxLength !== undefined) {
-        result = result.max(schema.maxLength);
-      }
+      if (schema.minLength !== undefined) result = result.min(schema.minLength);
+      if (schema.maxLength !== undefined) result = result.max(schema.maxLength);
       return withSharedConstraints(result, schema);
     }
     case "integer": {
       let result = z.number().int();
-      if (schema.minimum !== undefined) {
-        result = result.min(schema.minimum);
-      }
-      if (schema.maximum !== undefined) {
-        result = result.max(schema.maximum);
-      }
+      if (schema.minimum !== undefined) result = result.min(schema.minimum as number);
+      if (schema.maximum !== undefined) result = result.max(schema.maximum as number);
       return withSharedConstraints(result, schema);
     }
     case "number": {
       let result = z.number();
-      if (schema.minimum !== undefined) {
-        result = result.min(schema.minimum);
-      }
-      if (schema.maximum !== undefined) {
-        result = result.max(schema.maximum);
-      }
+      if (schema.minimum !== undefined) result = result.min(schema.minimum as number);
+      if (schema.maximum !== undefined) result = result.max(schema.maximum as number);
       return withSharedConstraints(result, schema);
     }
     case "boolean":
@@ -165,7 +100,7 @@ function openApiSchemaToZod(definition: OpenApiSchema | undefined, document: Ope
     case undefined: {
       const shape = Object.fromEntries(
         Object.entries(schema.properties ?? {}).map(([key, property]) => {
-          const propertySchema = openApiSchemaToZod(property, document);
+          const propertySchema = openApiSchemaToZod(property as SchemaObject | ReferenceObject, document);
           const required = schema.required?.includes(key) ?? false;
           return [key, required ? propertySchema : propertySchema.optional()];
         }),
@@ -177,17 +112,18 @@ function openApiSchemaToZod(definition: OpenApiSchema | undefined, document: Ope
   }
 }
 
-function operationInputSchema(operation: OpenApiOperation, document: OpenApiDocument) {
-  const bodySchema = operation.requestBody?.content?.["application/json"]?.schema;
+function operationInputSchema(operation: OperationObject, document: OpenAPIObject) {
+  const requestBody = operation.requestBody && !("$ref" in operation.requestBody) ? operation.requestBody : undefined;
+  const bodySchema = requestBody?.content?.["application/json"]?.schema as SchemaObject | ReferenceObject | undefined;
   if (bodySchema) {
     return openApiSchemaToZod(bodySchema, document);
   }
 
-  const pathParams = (operation.parameters ?? []).filter((p) => p.in === "path");
+  const pathParams = (operation.parameters ?? []).filter((p): p is ParameterObject => !("$ref" in p) && p.in === "path");
   if (pathParams.length > 0) {
     const shape = Object.fromEntries(
       pathParams.map((p) => {
-        const schema = openApiSchemaToZod(p.schema, document);
+        const schema = openApiSchemaToZod(p.schema as SchemaObject | undefined, document);
         return [p.name, p.required ? schema : schema.optional()];
       }),
     );
@@ -202,7 +138,7 @@ export { OPENAPI_YAML };
 
 export const REST_ENDPOINTS: RestEndpoint[] = Object.entries(OPENAPI_DOCUMENT.paths ?? {}).flatMap(([path, operations]) => {
   return (["get", "post"] as const).flatMap((method) => {
-    const operation = operations[method];
+    const operation = operations[method] as OperationObject | undefined;
     if (!operation) {
       return [];
     }
@@ -271,8 +207,8 @@ function toToolResult(endpoint: RestEndpoint, result: unknown) {
 export function createMcpWrapperServer(restBaseUrl: string) {
   const server = new McpServer(
     {
-      name: OPENAPI_DOCUMENT.info?.title ?? "pokemon-champions-calc-mcp",
-      version: OPENAPI_DOCUMENT.info?.version ?? "1.0.0",
+      name: OPENAPI_DOCUMENT.info.title ?? "pokemon-champions-calc-mcp",
+      version: OPENAPI_DOCUMENT.info.version ?? "1.0.0",
     },
     {
       capabilities: {

@@ -3,20 +3,19 @@ info:
   title: Pokemon Champions Calc API
   version: 0.1.0
   description: >
-    Two endpoints. POST /calc accepts an array of CalcRequest objects and
-    returns damage results. Each combatant requires species plus either exact
-    stats or championsPoints (Champions point allocation, max 66 total, each
-    point multiplies EVs by 8). GET /pokemon/stats/{name} resolves any species
-    by name and returns base stats and computed level 50 stats with 31 IVs and
-    no investment, useful for looking up a pokemon before building a calc
-    request.
+    Pokémon Champions damage calculator. POST /calc runs damage calculations
+    for a batch of matchups. Each combatant requires species plus either exact
+    final stats (from GET /pokemon/stats) or championsPoints (stat point
+    allocations, 0–32 per stat, 1:1 increase, all IVs fixed at 31).
+    GET /pokemon/stats/{name} returns base stats and computed level 50 stats
+    for any species — use this before building a calc request.
 servers:
   - url: https://zero41120pokemontools.com
 paths:
   /calc:
     post:
       operationId: calc
-      summary: Accepts an array of CalcRequest to batch calculate damage
+      summary: Batch calculate damage for one or more matchups
       requestBody:
         required: true
         content:
@@ -37,86 +36,168 @@ paths:
   /pokemon/stats/{name}:
     get:
       operationId: getPokemonStats
-      summary: Resolve a pokemon into its final level 50 stats in Pokemon Champion, this is the preferred way to get stats over using web search.
+      summary: >
+        Look up a Pokémon's base stats and computed level 50 stats in Pokémon
+        Champions. Prefer this over web search. All IVs are fixed at 31; returns
+        stats with zero stat point investment as the baseline.
       parameters:
         - name: name
           in: path
           required: true
           schema:
             type: string
+            description: Pokémon species name (e.g. "Pikachu", "Garchomp")
       responses:
         "200":
           description: Resolved stat payload
 components:
   schemas:
     ExactStats:
+      description: >
+        Arbitrary number of stats for a Pokemon when exact value is requested (i.e. game update but tool does not, or custom stats for modded Pokemon). All six stats are required when using this.
       type: object
       required: [hp, atk, def, spa, spd, spe]
       properties:
-        hp: { type: integer }
-        atk: { type: integer }
-        def: { type: integer }
-        spa: { type: integer }
-        spd: { type: integer }
-        spe: { type: integer }
+        hp: { type: integer, description: "Arbitrary HP stat value" }
+        atk: { type: integer, description: "Arbitrary Attack stat value" }
+        def: { type: integer, description: "Arbitrary Defense stat value" }
+        spa:
+          { type: integer, description: "Arbitrary Special Attack stat value" }
+        spd:
+          { type: integer, description: "Arbitrary Special Defense stat value" }
+        spe: { type: integer, description: "Arbitrary Speed stat value" }
     CombatantInput:
       type: object
       properties:
         name:
           type: string
+          description: Display name for this combatant (optional label)
         species:
           type: string
+          description: Pokémon species name (e.g. "Pikachu"). Required for the calc.
         baseSpecies:
           type: string
+          description: Base species name for formes (e.g. "Rotom" for "Rotom-Heat")
         level:
           type: integer
+          description: Battle level (default 50 in Pokémon Champions)
         item:
           type: string
+          description: Held item name (e.g. "Life Orb")
         ability:
           type: string
+          description: Ability name (e.g. "Intimidate")
         moves:
           type: array
           items:
             type: string
-        stats:
+          description: Move names (only the attacking move matters for the calc)
+        exactStats:
           $ref: "#/components/schemas/ExactStats"
         championsPoints:
+          description: >
+            Champions stat points (0-32 per stat, 1:1 stat increase; replaces EVs).
+            All IVs are fixed at 31. Use championsPoints or exactStats, not both.
           type: object
           properties:
-            hp: { type: integer }
-            atk: { type: integer }
-            def: { type: integer }
-            spa: { type: integer }
-            spd: { type: integer }
-            spe: { type: integer }
+            hp:
+              {
+                type: integer,
+                minimum: 0,
+                maximum: 32,
+                description: "HP stat points",
+              }
+            atk:
+              {
+                type: integer,
+                minimum: 0,
+                maximum: 32,
+                description: "Attack stat points",
+              }
+            def:
+              {
+                type: integer,
+                minimum: 0,
+                maximum: 32,
+                description: "Defense stat points",
+              }
+            spa:
+              {
+                type: integer,
+                minimum: 0,
+                maximum: 32,
+                description: "Special Attack stat points",
+              }
+            spd:
+              {
+                type: integer,
+                minimum: 0,
+                maximum: 32,
+                description: "Special Defense stat points",
+              }
+            spe:
+              {
+                type: integer,
+                minimum: 0,
+                maximum: 32,
+                description: "Speed stat points",
+              }
         nature:
           type: string
+          description: Nature name (e.g. "Modest", "Adamant"). Affects stat multipliers.
         currentHP:
           type: integer
+          description: Current HP for survivability checks (defaults to full HP)
         status:
           type: string
+          description: Status condition
     CalcField:
       type: object
+      description: Battle field conditions affecting damage calculation
       properties:
         weather:
           type: string
+          description: Weather condition (e.g. "Sun", "Rain", "Sand", "Snow")
         terrain:
           type: string
+          description: Terrain (e.g. "Electric", "Grassy", "Misty", "Psychic")
         attackerSide:
           type: object
+          description: Conditions on the attacker's side of the field
           properties:
-            tailwind: { type: boolean }
-            helpingHand: { type: boolean }
-            friendGuard: { type: boolean }
+            helpingHand:
+              {
+                type: boolean,
+                description: "Helping Hand boosts move power by 1.5x",
+              }
+            friendGuard:
+              {
+                type: boolean,
+                description: "Friend Guard reduces damage taken by 25%",
+              }
         defenderSide:
           type: object
+          description: Conditions on the defender's side of the field
           properties:
-            tailwind: { type: boolean }
-            reflect: { type: boolean }
-            lightScreen: { type: boolean }
-            auroraVeil: { type: boolean }
-            friendGuard: { type: boolean }
-            protected: { type: boolean }
+            reflect:
+              { type: boolean, description: "Reflect halves physical damage" }
+            lightScreen:
+              {
+                type: boolean,
+                description: "Light Screen halves special damage",
+              }
+            auroraVeil:
+              {
+                type: boolean,
+                description: "Aurora Veil halves all damage (requires hail/snow)",
+              }
+            friendGuard:
+              {
+                type: boolean,
+                description: "Friend Guard reduces damage taken by 25%",
+              }
+            protected:
+              { type: boolean, description: "Pokémon is protected this turn" }
     CalcRequest:
       type: object
       required: [attacker, defender, move]
@@ -127,5 +208,6 @@ components:
           $ref: "#/components/schemas/CombatantInput"
         move:
           type: string
+          description: Name of the move being used (e.g. "Earthquake", "Moonblast")
         field:
           $ref: "#/components/schemas/CalcField"
