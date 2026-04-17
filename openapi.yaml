@@ -91,7 +91,7 @@ paths:
                           minimum: -6
                           maximum: 6
                       additionalProperties: false
-                    ignoreableOptionalParameter:
+                    optionalParameterIgnoreUnlessNecessary:
                       type: object
                       properties:
                         abilityOn:
@@ -243,7 +243,7 @@ paths:
                           minimum: -6
                           maximum: 6
                       additionalProperties: false
-                    ignoreableOptionalParameter:
+                    optionalParameterIgnoreUnlessNecessary:
                       type: object
                       properties:
                         abilityOn:
@@ -337,7 +337,7 @@ paths:
                   properties:
                     name:
                       type: string
-                    ignoreableOptionalParameter:
+                    optionalParameterIgnoreUnlessNecessary:
                       type: object
                       properties:
                         isCrit:

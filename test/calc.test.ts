@@ -71,7 +71,10 @@ describe("CalcRequestSchema", () => {
   test("rejects invalid status", () => {
     const result = CalcRequestSchema.safeParse({
       format: "Singles",
-      attacker: { name: "Garchomp", ignoreableOptionalParameter: { status: "confused" } },
+      attacker: {
+        name: "Garchomp",
+        optionalParameterIgnoreUnlessNecessary: { status: "confused" },
+      },
       defender: { name: "Amoonguss" },
       move: { name: "Earthquake" },
     });
@@ -82,7 +85,10 @@ describe("CalcRequestSchema", () => {
     for (const status of ["", "brn", "par", "psn", "tox", "slp", "frz"]) {
       const result = CalcRequestSchema.safeParse({
         format: "Singles",
-        attacker: { name: "Garchomp", ignoreableOptionalParameter: { status } },
+        attacker: {
+          name: "Garchomp",
+          optionalParameterIgnoreUnlessNecessary: { status },
+        },
         defender: { name: "Amoonguss" },
         move: { name: "Earthquake" },
       });
@@ -93,7 +99,10 @@ describe("CalcRequestSchema", () => {
   test("accepts forceStatsValue as null", () => {
     const result = CalcRequestSchema.safeParse({
       format: "Singles",
-      attacker: { name: "Shuckle", ignoreableOptionalParameter: { forceStatsValue: null } },
+      attacker: {
+        name: "Shuckle",
+        optionalParameterIgnoreUnlessNecessary: { forceStatsValue: null },
+      },
       defender: { name: "Garchomp" },
       move: { name: "Tackle" },
     });
@@ -138,10 +147,22 @@ describe("Champions mode EV conversion", () => {
 
   test("standard EVs are converted to champion points for display (÷8)", () => {
     const result = runCalc({
-      attacker: { name: "Miraidon", ability: "Hadron Engine", item: "Choice Specs", nature: "Timid", evs: { spa: 252, spe: 252, hp: 4 } },
-      defender: { name: "Calyrex-Shadow", ability: "As One (Spectrier)", nature: "Timid", evs: { spa: 252, spe: 252, hp: 4 } },
+      attacker: {
+        name: "Miraidon",
+        ability: "Hadron Engine",
+        item: "Choice Specs",
+        nature: "Timid",
+        evs: { spa: 252, spe: 252, hp: 4 },
+      },
+      defender: {
+        name: "Calyrex-Shadow",
+        ability: "As One (Spectrier)",
+        nature: "Timid",
+        evs: { spa: 252, spe: 252, hp: 4 },
+      },
       move: { name: "Electro Drift" },
-      format: DOUBLES, field: { terrain: "Electric" },
+      format: DOUBLES,
+      field: { terrain: "Electric" },
     });
     expect(result.attackerStats).toContain("32+)");
   });
@@ -179,50 +200,92 @@ describe("runCalc", () => {
   });
 
   test("crit increases damage range minimum", () => {
-    const base = runCalc({ attacker: garchomp, defender: amoonguss, move: { name: "Earthquake" }, format: DOUBLES });
-    const crit = runCalc({ attacker: garchomp, defender: amoonguss, move: { name: "Earthquake", ignoreableOptionalParameter: { isCrit: true } }, format: DOUBLES });
+    const base = runCalc({
+      attacker: garchomp,
+      defender: amoonguss,
+      move: { name: "Earthquake" },
+      format: DOUBLES,
+    });
+    const crit = runCalc({
+      attacker: garchomp,
+      defender: amoonguss,
+      move: {
+        name: "Earthquake",
+        optionalParameterIgnoreUnlessNecessary: { isCrit: true },
+      },
+      format: DOUBLES,
+    });
     expect(crit.range[0]).toBeGreaterThan(base.range[0]);
   });
 
   test("Helping Hand increases damage", () => {
-    const base = runCalc({ attacker: garchomp, defender: amoonguss, move: { name: "Earthquake" }, format: DOUBLES });
+    const base = runCalc({
+      attacker: garchomp,
+      defender: amoonguss,
+      move: { name: "Earthquake" },
+      format: DOUBLES,
+    });
     const hh = runCalc({
       attacker: garchomp,
       defender: amoonguss,
       move: { name: "Earthquake" },
-      format: DOUBLES, field: { attackerSide: { isHelpingHand: true } },
+      format: DOUBLES,
+      field: { attackerSide: { isHelpingHand: true } },
     });
     expect(hh.range[0]).toBeGreaterThan(base.range[0]);
   });
 
   test("positive attack boost increases damage", () => {
-    const base = runCalc({ attacker: garchomp, defender: amoonguss, move: { name: "Earthquake" }, format: DOUBLES });
-    const boosted = runCalc({ 
-      attacker: { ...garchomp, boosts: { atk: 2 } }, 
-      defender: amoonguss, 
-      move: { name: "Earthquake" }, 
-      format: DOUBLES 
+    const base = runCalc({
+      attacker: garchomp,
+      defender: amoonguss,
+      move: { name: "Earthquake" },
+      format: DOUBLES,
+    });
+    const boosted = runCalc({
+      attacker: { ...garchomp, boosts: { atk: 2 } },
+      defender: amoonguss,
+      move: { name: "Earthquake" },
+      format: DOUBLES,
     });
     expect(boosted.range[0]).toBeGreaterThan(base.range[0]);
   });
 
   test("Reflect halves physical damage in Doubles", () => {
-    const base = runCalc({ attacker: garchomp, defender: amoonguss, move: { name: "Earthquake" }, format: DOUBLES });
+    const base = runCalc({
+      attacker: garchomp,
+      defender: amoonguss,
+      move: { name: "Earthquake" },
+      format: DOUBLES,
+    });
     const reflect = runCalc({
       attacker: garchomp,
       defender: amoonguss,
       move: { name: "Earthquake" },
-      format: DOUBLES, field: { defenderSide: { isReflect: true } },
+      format: DOUBLES,
+      field: { defenderSide: { isReflect: true } },
     });
     expect(reflect.range[1]).toBeLessThan(base.range[0]);
   });
 
   test("guaranteed OHKO registers ko chance of 1", () => {
     const result = runCalc({
-      attacker: { name: "Miraidon", ability: "Hadron Engine", item: "Choice Specs", nature: "Timid", evs: { spa: 32, spe: 32, hp: 1 } },
-      defender: { name: "Calyrex-Shadow", ability: "As One (Spectrier)", nature: "Timid", evs: { spa: 32, spe: 32, hp: 1 } },
+      attacker: {
+        name: "Miraidon",
+        ability: "Hadron Engine",
+        item: "Choice Specs",
+        nature: "Timid",
+        evs: { spa: 32, spe: 32, hp: 1 },
+      },
+      defender: {
+        name: "Calyrex-Shadow",
+        ability: "As One (Spectrier)",
+        nature: "Timid",
+        evs: { spa: 32, spe: 32, hp: 1 },
+      },
       move: { name: "Electro Drift" },
-      format: DOUBLES, field: { terrain: "Electric" },
+      format: DOUBLES,
+      field: { terrain: "Electric" },
     });
     expect(result.ko.chance).toBe(1);
     expect(result.ko.n).toBe(1);
@@ -230,8 +293,14 @@ describe("runCalc", () => {
 
   test("non-damaging move returns zero damage range", () => {
     const result = runCalc({
-      attacker: { name: "Amoonguss", ignoreableOptionalParameter: { ability: "Regenerator" } },
-      defender: { name: "Garchomp", ignoreableOptionalParameter: { ability: "Rough Skin" } },
+      attacker: {
+        name: "Amoonguss",
+        optionalParameterIgnoreUnlessNecessary: { ability: "Regenerator" },
+      },
+      defender: {
+        name: "Garchomp",
+        optionalParameterIgnoreUnlessNecessary: { ability: "Rough Skin" },
+      },
       move: { name: "Spore" },
       format: DOUBLES,
     });
@@ -253,7 +322,11 @@ describe("runCalc", () => {
 
   test("defaults to gen 9 when gen is omitted", () => {
     const result = runCalc({
-      attacker: { name: "Flutter Mane", ability: "Protosynthesis", nature: "Timid" },
+      attacker: {
+        name: "Flutter Mane",
+        ability: "Protosynthesis",
+        nature: "Timid",
+      },
       defender: { name: "Incineroar", ability: "Intimidate" },
       move: { name: "Moonblast" },
       format: DOUBLES,
@@ -265,24 +338,24 @@ describe("runCalc", () => {
   test("corrects optimistic KO claims for multi-hit moves (Maushold vs Aerodactyl case)", () => {
     const result = runCalc({
       format: DOUBLES,
-      attacker: { 
-        name: "Maushold", 
-        ability: "Technician", 
-        evs: { atk: 32 }, 
-        nature: "Jolly"
+      attacker: {
+        name: "Maushold",
+        ability: "Technician",
+        evs: { atk: 32 },
+        nature: "Jolly",
       },
-      defender: { 
-        name: "Aerodactyl", 
-        evs: { hp: 0, def: 0 }
+      defender: {
+        name: "Aerodactyl",
+        evs: { hp: 0, def: 0 },
       },
-      move: { 
-        name: "Population Bomb", 
-        ignoreableOptionalParameter: { hits: 10 }
-      }
+      move: {
+        name: "Population Bomb",
+        optionalParameterIgnoreUnlessNecessary: { hits: 10 },
+      },
     });
 
     const [min, max] = result.range;
-    const defHp = 155; 
+    const defHp = 155;
 
     if (max < defHp) {
       expect(result.ko.text).toBe("not a KO");
@@ -298,7 +371,15 @@ describe("runCalc", () => {
 describe("forceStatsValue", () => {
   test("forced stat appears with ! in attackerStats", () => {
     const result = runCalc({
-      attacker: { name: "Shuckle", ability: "Contrary", nature: "Brave", evs: { def: 32 }, ignoreableOptionalParameter: { forceStatsValue: { atk: 230 } } },
+      attacker: {
+        name: "Shuckle",
+        ability: "Contrary",
+        nature: "Brave",
+        evs: { def: 32 },
+        optionalParameterIgnoreUnlessNecessary: {
+          forceStatsValue: { atk: 230 },
+        },
+      },
       defender: { name: "Garchomp", ability: "Rough Skin" },
       move: { name: "Rock Smash" },
       format: DOUBLES,
@@ -314,7 +395,14 @@ describe("forceStatsValue", () => {
       format: DOUBLES,
     });
     const forced = runCalc({
-      attacker: { name: "Shuckle", ability: "Contrary", nature: "Brave", ignoreableOptionalParameter: { forceStatsValue: { atk: 230 } } },
+      attacker: {
+        name: "Shuckle",
+        ability: "Contrary",
+        nature: "Brave",
+        optionalParameterIgnoreUnlessNecessary: {
+          forceStatsValue: { atk: 230 },
+        },
+      },
       defender: { name: "Garchomp", ability: "Rough Skin" },
       move: { name: "Rock Smash" },
       format: DOUBLES,
@@ -323,8 +411,21 @@ describe("forceStatsValue", () => {
   });
 
   test("null forceStatsValue is a no-op", () => {
-    const base = runCalc({ attacker: garchomp, defender: amoonguss, move: { name: "Earthquake" }, format: DOUBLES });
-    const nullForce = runCalc({ attacker: { ...garchomp, ignoreableOptionalParameter: { forceStatsValue: null } }, defender: amoonguss, move: { name: "Earthquake" }, format: DOUBLES });
+    const base = runCalc({
+      attacker: garchomp,
+      defender: amoonguss,
+      move: { name: "Earthquake" },
+      format: DOUBLES,
+    });
+    const nullForce = runCalc({
+      attacker: {
+        ...garchomp,
+        optionalParameterIgnoreUnlessNecessary: { forceStatsValue: null },
+      },
+      defender: amoonguss,
+      move: { name: "Earthquake" },
+      format: DOUBLES,
+    });
     expect(nullForce.range).toEqual(base.range);
   });
 });
@@ -340,7 +441,7 @@ describe("error handling", () => {
         attacker: { name: "Garchomp" },
         defender: { name: "Amoonguss" },
         move: { name: "Earthquake" },
-      } as any)
+      } as any),
     ).toThrow("format (Singles/Doubles) is required");
   });
 
@@ -351,7 +452,7 @@ describe("error handling", () => {
         defender: amoonguss,
         move: { name: "Earthquake" },
         format: DOUBLES,
-      })
+      }),
     ).toThrow();
   });
 

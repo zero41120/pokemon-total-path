@@ -1,7 +1,7 @@
 import * as z from "zod/v4";
 
 const statsShape = {
-  hp:  z.number().int().min(0).max(252).optional(),
+  hp: z.number().int().min(0).max(252).optional(),
   atk: z.number().int().min(0).max(252).optional(),
   def: z.number().int().min(0).max(252).optional(),
   spa: z.number().int().min(0).max(252).optional(),
@@ -28,14 +28,17 @@ export const PokemonOptionalParamsSchema = z.object({
   boostedStat: z.enum(["atk", "def", "spa", "spd", "spe", "auto"]).optional(),
   toxicCounter: z.number().int().min(0).optional(),
   moves: z.array(z.string()).max(4).optional(),
-  forceStatsValue: z.object({
-    hp:  z.number().int().min(1).optional(),
-    atk: z.number().int().min(1).optional(),
-    def: z.number().int().min(1).optional(),
-    spa: z.number().int().min(1).optional(),
-    spd: z.number().int().min(1).optional(),
-    spe: z.number().int().min(1).optional(),
-  }).nullable().optional(),
+  forceStatsValue: z
+    .object({
+      hp: z.number().int().min(1).optional(),
+      atk: z.number().int().min(1).optional(),
+      def: z.number().int().min(1).optional(),
+      spa: z.number().int().min(1).optional(),
+      spd: z.number().int().min(1).optional(),
+      spe: z.number().int().min(1).optional(),
+    })
+    .nullable()
+    .optional(),
   teraType: z.string().optional(),
   isDynamaxed: z.boolean().optional(),
   dynamaxLevel: z.number().int().min(0).max(10).optional(),
@@ -48,7 +51,8 @@ export const PokemonInputSchema = z.object({
   item: z.string().optional(),
   evs: StatsObjSchema.optional(),
   boosts: BoostsSchema.optional(),
-  ignoreableOptionalParameter: PokemonOptionalParamsSchema.optional(),
+  optionalParameterIgnoreUnlessNecessary:
+    PokemonOptionalParamsSchema.optional(),
 });
 
 export const MoveOptionalParamsSchema = z.object({
@@ -63,7 +67,7 @@ export const MoveOptionalParamsSchema = z.object({
 
 export const MoveInputSchema = z.object({
   name: z.string(),
-  ignoreableOptionalParameter: MoveOptionalParamsSchema.optional(),
+  optionalParameterIgnoreUnlessNecessary: MoveOptionalParamsSchema.optional(),
 });
 
 export const SideConditionsSchema = z.object({
@@ -93,7 +97,18 @@ export const SideConditionsSchema = z.object({
 });
 
 export const FieldInputSchema = z.object({
-  weather: z.enum(["Sun", "Rain", "Sand", "Snow", "Hail", "HarshSun", "HeavyRain", "StrongWinds"]).optional(),
+  weather: z
+    .enum([
+      "Sun",
+      "Rain",
+      "Sand",
+      "Snow",
+      "Hail",
+      "HarshSun",
+      "HeavyRain",
+      "StrongWinds",
+    ])
+    .optional(),
   terrain: z.enum(["Electric", "Grassy", "Misty", "Psychic"]).optional(),
   isMagicRoom: z.boolean().optional(),
   isWonderRoom: z.boolean().optional(),

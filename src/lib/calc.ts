@@ -1,8 +1,21 @@
-import { calculate, Field, Generations, Move, Pokemon, Side } from "@smogon/calc";
-import { NATURES } from "@smogon/calc/dist/data/natures.js";
 import type { GenerationNum, StatID, StatsTable } from "@smogon/calc";
+import {
+  calculate,
+  Field,
+  Generations,
+  Move,
+  Pokemon,
+  Side,
+} from "@smogon/calc";
+import { NATURES } from "@smogon/calc/dist/data/natures.js";
 import { ValidationError } from "./errors";
-import type { CalcRequest, PokemonInput, MoveInput, FieldInput, SideInput } from "./schemas";
+import type {
+  CalcRequest,
+  FieldInput,
+  MoveInput,
+  PokemonInput,
+  SideInput,
+} from "./schemas";
 
 const FIXED_LEVEL = 50;
 const FIXED_IV = 31;
@@ -29,7 +42,9 @@ function getNatureMods(nature?: string): { plus?: StatID; minus?: StatID } {
 }
 
 function isChampMode(evs: StatsObj): boolean {
-  return Object.values(evs).every((v) => v === undefined || v <= CHAMP_THRESHOLD);
+  return Object.values(evs).every(
+    (v) => v === undefined || v <= CHAMP_THRESHOLD,
+  );
 }
 
 function resolveEvs(evs: StatsObj | undefined): Partial<StatsTable> {
@@ -42,7 +57,9 @@ function resolveEvs(evs: StatsObj | undefined): Partial<StatsTable> {
   return result;
 }
 
-function toChampPoints(evs: StatsObj | undefined): Partial<Record<StatID, number>> {
+function toChampPoints(
+  evs: StatsObj | undefined,
+): Partial<Record<StatID, number>> {
   if (!evs || Object.keys(evs).length === 0) return {};
   const champ = isChampMode(evs);
   const result: Partial<Record<StatID, number>> = {};
@@ -62,15 +79,21 @@ function backCalcBase(target: number, stat: StatID, nm: number): number {
 
 function buildPokemon(genNum: GenerationNum, input: PokemonInput): Pokemon {
   const gen = Generations.get(genNum);
-  const p = input.ignoreableOptionalParameter ?? {};
+  const p = input.optionalParameterIgnoreUnlessNecessary ?? {};
   const resolvedEvs = resolveEvs(input.evs);
-  const ivs = STAT_ORDER.reduce((acc, k) => ({ ...acc, [k]: FIXED_IV }), {} as Partial<StatsTable>);
+  const ivs = STAT_ORDER.reduce(
+    (acc, k) => ({ ...acc, [k]: FIXED_IV }),
+    {} as Partial<StatsTable>,
+  );
 
   let overrides: Record<string, unknown> | undefined;
   if (p.forceStatsValue && Object.keys(p.forceStatsValue).length > 0) {
     const { plus, minus } = getNatureMods(input.nature);
     const baseStats: Partial<StatsTable> = {};
-    for (const [k, v] of Object.entries(p.forceStatsValue) as [StatID, number][]) {
+    for (const [k, v] of Object.entries(p.forceStatsValue) as [
+      StatID,
+      number,
+    ][]) {
       if (v == null) continue;
       const nm = k === plus ? 1.1 : k === minus ? 0.9 : 1.0;
       baseStats[k] = backCalcBase(v, k, nm);
@@ -105,7 +128,7 @@ function buildPokemon(genNum: GenerationNum, input: PokemonInput): Pokemon {
 
 function buildMove(genNum: GenerationNum, input: MoveInput): Move {
   const gen = Generations.get(genNum);
-  const p = input.ignoreableOptionalParameter ?? {};
+  const p = input.optionalParameterIgnoreUnlessNecessary ?? {};
   return new Move(gen, input.name, {
     isCrit: p.isCrit,
     useZ: p.useZ,
@@ -124,7 +147,7 @@ function buildSide(input?: SideInput): Side {
 
 function buildField(format: "Singles" | "Doubles", input?: FieldInput): Field {
   return new Field({
-    gameType: (format as never),
+    gameType: format as never,
     weather: input?.weather as never,
     terrain: input?.terrain as never,
     isMagicRoom: input?.isMagicRoom,
@@ -142,25 +165,34 @@ function buildField(format: "Singles" | "Doubles", input?: FieldInput): Field {
   });
 }
 
-function formatStats(
-  pokemon: Pokemon,
-  input: PokemonInput,
-): string {
+function formatStats(pokemon: Pokemon, input: PokemonInput): string {
   const { plus, minus } = getNatureMods(input.nature);
   const pts = toChampPoints(input.evs);
-  const forced = input.ignoreableOptionalParameter?.forceStatsValue;
+  const forced = input.optionalParameterIgnoreUnlessNecessary?.forceStatsValue;
 
   const vals = STAT_ORDER.map((stat) => {
     const v = pokemon.stats[stat];
     const isForced = forced?.[stat] != null;
-    const suffix = isForced ? "!" : stat === plus ? "+" : stat === minus ? "-" : "";
+    const suffix = isForced
+      ? "!"
+      : stat === plus
+        ? "+"
+        : stat === minus
+          ? "-"
+          : "";
     return `${v}${suffix}`;
   });
 
   const ptVals = STAT_ORDER.map((stat) => {
     const p = pts[stat] ?? 0;
     const isForced = forced?.[stat] != null;
-    const suffix = isForced ? "!" : stat === plus ? "+" : stat === minus ? "-" : "";
+    const suffix = isForced
+      ? "!"
+      : stat === plus
+        ? "+"
+        : stat === minus
+          ? "-"
+          : "";
     return `${p}${suffix}`;
   });
 
@@ -179,7 +211,10 @@ export function runCalc(request: CalcRequest): CalcResult {
     defender = buildPokemon(genNum, request.defender);
     move = buildMove(genNum, request.move);
   } catch (e) {
-    throw new ValidationError(e instanceof Error ? e.message : "Invalid calc input", e);
+    throw new ValidationError(
+      e instanceof Error ? e.message : "Invalid calc input",
+      e,
+    );
   }
 
   const field = buildField(request.format, request.field);
