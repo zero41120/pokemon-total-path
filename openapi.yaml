@@ -10,7 +10,7 @@ paths:
     post:
       operationId: calc
       summary: Calculate damage
-      description: Calculate damage between an attacker and defender for a given move and field state. Level and IVs are locked to 50 and 31 (Champions format). EVs with all values ≤ 32 are auto-detected as Champion stat points (×8 conversion, IVs fixed at 31).
+      description: Calculate damage between an attacker and defender for a given move and field state. Level and IVs are locked to 50 and 31 (Champions format). EVs with all values ≤ 32 are auto-detected as Champion stat points (x8 conversion, IVs fixed at 31).
       requestBody:
         required: true
         content:
@@ -33,146 +33,150 @@ paths:
                   properties:
                     name:
                       type: string
-                    nature:
-                      type: string
-                    ability:
-                      type: string
-                    abilityOn:
-                      type: boolean
-                    item:
-                      type: string
-                    gender:
-                      type: string
-                      enum:
-                        - M
-                        - F
-                        - N
-                    evs:
+                    params:
                       type: object
                       properties:
-                        hp:
-                          type: integer
-                          minimum: 0
-                          maximum: 252
-                        atk:
-                          type: integer
-                          minimum: 0
-                          maximum: 252
-                        def:
-                          type: integer
-                          minimum: 0
-                          maximum: 252
-                        spa:
-                          type: integer
-                          minimum: 0
-                          maximum: 252
-                        spd:
-                          type: integer
-                          minimum: 0
-                          maximum: 252
-                        spe:
-                          type: integer
-                          minimum: 0
-                          maximum: 252
-                      additionalProperties: false
-                    boosts:
-                      type: object
-                      properties:
-                        atk:
-                          type: integer
-                          minimum: -6
-                          maximum: 6
-                        def:
-                          type: integer
-                          minimum: -6
-                          maximum: 6
-                        spa:
-                          type: integer
-                          minimum: -6
-                          maximum: 6
-                        spd:
-                          type: integer
-                          minimum: -6
-                          maximum: 6
-                        spe:
-                          type: integer
-                          minimum: -6
-                          maximum: 6
-                      additionalProperties: false
-                    status:
-                      type: string
-                      enum:
-                        - ""
-                        - brn
-                        - par
-                        - psn
-                        - tox
-                        - slp
-                        - frz
-                    currentHp:
-                      type: integer
-                      minimum: 0
-                      maximum: 9007199254740991
-                    alliesFainted:
-                      type: integer
-                      minimum: 0
-                      maximum: 5
-                    boostedStat:
-                      type: string
-                      enum:
-                        - atk
-                        - def
-                        - spa
-                        - spd
-                        - spe
-                        - auto
-                    toxicCounter:
-                      type: integer
-                      minimum: 0
-                      maximum: 9007199254740991
-                    moves:
-                      maxItems: 4
-                      type: array
-                      items:
-                        type: string
-                    forceStatsValue:
-                      anyOf:
-                        - type: object
+                        nature:
+                          type: string
+                        ability:
+                          type: string
+                        abilityOn:
+                          type: boolean
+                        item:
+                          type: string
+                        gender:
+                          type: string
+                          enum:
+                            - M
+                            - F
+                            - N
+                        evs:
+                          type: object
                           properties:
                             hp:
                               type: integer
-                              minimum: 1
-                              maximum: 9007199254740991
+                              minimum: 0
+                              maximum: 252
                             atk:
                               type: integer
-                              minimum: 1
-                              maximum: 9007199254740991
+                              minimum: 0
+                              maximum: 252
                             def:
                               type: integer
-                              minimum: 1
-                              maximum: 9007199254740991
+                              minimum: 0
+                              maximum: 252
                             spa:
                               type: integer
-                              minimum: 1
-                              maximum: 9007199254740991
+                              minimum: 0
+                              maximum: 252
                             spd:
                               type: integer
-                              minimum: 1
-                              maximum: 9007199254740991
+                              minimum: 0
+                              maximum: 252
                             spe:
                               type: integer
-                              minimum: 1
-                              maximum: 9007199254740991
+                              minimum: 0
+                              maximum: 252
                           additionalProperties: false
-                        - type: "null"
-                    teraType:
-                      type: string
-                    isDynamaxed:
-                      type: boolean
-                    dynamaxLevel:
-                      type: integer
-                      minimum: 0
-                      maximum: 10
+                        boosts:
+                          type: object
+                          properties:
+                            atk:
+                              type: integer
+                              minimum: -6
+                              maximum: 6
+                            def:
+                              type: integer
+                              minimum: -6
+                              maximum: 6
+                            spa:
+                              type: integer
+                              minimum: -6
+                              maximum: 6
+                            spd:
+                              type: integer
+                              minimum: -6
+                              maximum: 6
+                            spe:
+                              type: integer
+                              minimum: -6
+                              maximum: 6
+                          additionalProperties: false
+                        status:
+                          type: string
+                          enum:
+                            - ""
+                            - brn
+                            - par
+                            - psn
+                            - tox
+                            - slp
+                            - frz
+                        currentHp:
+                          type: integer
+                          minimum: 0
+                          maximum: 9007199254740991
+                        alliesFainted:
+                          type: integer
+                          minimum: 0
+                          maximum: 5
+                        boostedStat:
+                          type: string
+                          enum:
+                            - atk
+                            - def
+                            - spa
+                            - spd
+                            - spe
+                            - auto
+                        toxicCounter:
+                          type: integer
+                          minimum: 0
+                          maximum: 9007199254740991
+                        moves:
+                          maxItems: 4
+                          type: array
+                          items:
+                            type: string
+                        forceStatsValue:
+                          anyOf:
+                            - type: object
+                              properties:
+                                hp:
+                                  type: integer
+                                  minimum: 1
+                                  maximum: 9007199254740991
+                                atk:
+                                  type: integer
+                                  minimum: 1
+                                  maximum: 9007199254740991
+                                def:
+                                  type: integer
+                                  minimum: 1
+                                  maximum: 9007199254740991
+                                spa:
+                                  type: integer
+                                  minimum: 1
+                                  maximum: 9007199254740991
+                                spd:
+                                  type: integer
+                                  minimum: 1
+                                  maximum: 9007199254740991
+                                spe:
+                                  type: integer
+                                  minimum: 1
+                                  maximum: 9007199254740991
+                              additionalProperties: false
+                            - type: "null"
+                        teraType:
+                          type: string
+                        isDynamaxed:
+                          type: boolean
+                        dynamaxLevel:
+                          type: integer
+                          minimum: 0
+                          maximum: 10
+                      additionalProperties: false
                   required:
                     - name
                   additionalProperties: false
@@ -181,146 +185,150 @@ paths:
                   properties:
                     name:
                       type: string
-                    nature:
-                      type: string
-                    ability:
-                      type: string
-                    abilityOn:
-                      type: boolean
-                    item:
-                      type: string
-                    gender:
-                      type: string
-                      enum:
-                        - M
-                        - F
-                        - N
-                    evs:
+                    params:
                       type: object
                       properties:
-                        hp:
-                          type: integer
-                          minimum: 0
-                          maximum: 252
-                        atk:
-                          type: integer
-                          minimum: 0
-                          maximum: 252
-                        def:
-                          type: integer
-                          minimum: 0
-                          maximum: 252
-                        spa:
-                          type: integer
-                          minimum: 0
-                          maximum: 252
-                        spd:
-                          type: integer
-                          minimum: 0
-                          maximum: 252
-                        spe:
-                          type: integer
-                          minimum: 0
-                          maximum: 252
-                      additionalProperties: false
-                    boosts:
-                      type: object
-                      properties:
-                        atk:
-                          type: integer
-                          minimum: -6
-                          maximum: 6
-                        def:
-                          type: integer
-                          minimum: -6
-                          maximum: 6
-                        spa:
-                          type: integer
-                          minimum: -6
-                          maximum: 6
-                        spd:
-                          type: integer
-                          minimum: -6
-                          maximum: 6
-                        spe:
-                          type: integer
-                          minimum: -6
-                          maximum: 6
-                      additionalProperties: false
-                    status:
-                      type: string
-                      enum:
-                        - ""
-                        - brn
-                        - par
-                        - psn
-                        - tox
-                        - slp
-                        - frz
-                    currentHp:
-                      type: integer
-                      minimum: 0
-                      maximum: 9007199254740991
-                    alliesFainted:
-                      type: integer
-                      minimum: 0
-                      maximum: 5
-                    boostedStat:
-                      type: string
-                      enum:
-                        - atk
-                        - def
-                        - spa
-                        - spd
-                        - spe
-                        - auto
-                    toxicCounter:
-                      type: integer
-                      minimum: 0
-                      maximum: 9007199254740991
-                    moves:
-                      maxItems: 4
-                      type: array
-                      items:
-                        type: string
-                    forceStatsValue:
-                      anyOf:
-                        - type: object
+                        nature:
+                          type: string
+                        ability:
+                          type: string
+                        abilityOn:
+                          type: boolean
+                        item:
+                          type: string
+                        gender:
+                          type: string
+                          enum:
+                            - M
+                            - F
+                            - N
+                        evs:
+                          type: object
                           properties:
                             hp:
                               type: integer
-                              minimum: 1
-                              maximum: 9007199254740991
+                              minimum: 0
+                              maximum: 252
                             atk:
                               type: integer
-                              minimum: 1
-                              maximum: 9007199254740991
+                              minimum: 0
+                              maximum: 252
                             def:
                               type: integer
-                              minimum: 1
-                              maximum: 9007199254740991
+                              minimum: 0
+                              maximum: 252
                             spa:
                               type: integer
-                              minimum: 1
-                              maximum: 9007199254740991
+                              minimum: 0
+                              maximum: 252
                             spd:
                               type: integer
-                              minimum: 1
-                              maximum: 9007199254740991
+                              minimum: 0
+                              maximum: 252
                             spe:
                               type: integer
-                              minimum: 1
-                              maximum: 9007199254740991
+                              minimum: 0
+                              maximum: 252
                           additionalProperties: false
-                        - type: "null"
-                    teraType:
-                      type: string
-                    isDynamaxed:
-                      type: boolean
-                    dynamaxLevel:
-                      type: integer
-                      minimum: 0
-                      maximum: 10
+                        boosts:
+                          type: object
+                          properties:
+                            atk:
+                              type: integer
+                              minimum: -6
+                              maximum: 6
+                            def:
+                              type: integer
+                              minimum: -6
+                              maximum: 6
+                            spa:
+                              type: integer
+                              minimum: -6
+                              maximum: 6
+                            spd:
+                              type: integer
+                              minimum: -6
+                              maximum: 6
+                            spe:
+                              type: integer
+                              minimum: -6
+                              maximum: 6
+                          additionalProperties: false
+                        status:
+                          type: string
+                          enum:
+                            - ""
+                            - brn
+                            - par
+                            - psn
+                            - tox
+                            - slp
+                            - frz
+                        currentHp:
+                          type: integer
+                          minimum: 0
+                          maximum: 9007199254740991
+                        alliesFainted:
+                          type: integer
+                          minimum: 0
+                          maximum: 5
+                        boostedStat:
+                          type: string
+                          enum:
+                            - atk
+                            - def
+                            - spa
+                            - spd
+                            - spe
+                            - auto
+                        toxicCounter:
+                          type: integer
+                          minimum: 0
+                          maximum: 9007199254740991
+                        moves:
+                          maxItems: 4
+                          type: array
+                          items:
+                            type: string
+                        forceStatsValue:
+                          anyOf:
+                            - type: object
+                              properties:
+                                hp:
+                                  type: integer
+                                  minimum: 1
+                                  maximum: 9007199254740991
+                                atk:
+                                  type: integer
+                                  minimum: 1
+                                  maximum: 9007199254740991
+                                def:
+                                  type: integer
+                                  minimum: 1
+                                  maximum: 9007199254740991
+                                spa:
+                                  type: integer
+                                  minimum: 1
+                                  maximum: 9007199254740991
+                                spd:
+                                  type: integer
+                                  minimum: 1
+                                  maximum: 9007199254740991
+                                spe:
+                                  type: integer
+                                  minimum: 1
+                                  maximum: 9007199254740991
+                              additionalProperties: false
+                            - type: "null"
+                        teraType:
+                          type: string
+                        isDynamaxed:
+                          type: boolean
+                        dynamaxLevel:
+                          type: integer
+                          minimum: 0
+                          maximum: 10
+                      additionalProperties: false
                   required:
                     - name
                   additionalProperties: false
@@ -329,26 +337,30 @@ paths:
                   properties:
                     name:
                       type: string
-                    isCrit:
-                      type: boolean
-                    useZ:
-                      type: boolean
-                    useMax:
-                      type: boolean
-                    isStellarFirstUse:
-                      type: boolean
-                    hits:
-                      type: integer
-                      minimum: 1
-                      maximum: 9007199254740991
-                    timesUsed:
-                      type: integer
-                      minimum: 1
-                      maximum: 9007199254740991
-                    timesUsedWithMetronome:
-                      type: integer
-                      minimum: 1
-                      maximum: 9007199254740991
+                    params:
+                      type: object
+                      properties:
+                        isCrit:
+                          type: boolean
+                        useZ:
+                          type: boolean
+                        useMax:
+                          type: boolean
+                        isStellarFirstUse:
+                          type: boolean
+                        hits:
+                          type: integer
+                          minimum: 1
+                          maximum: 9007199254740991
+                        timesUsed:
+                          type: integer
+                          minimum: 1
+                          maximum: 9007199254740991
+                        timesUsedWithMetronome:
+                          type: integer
+                          minimum: 1
+                          maximum: 9007199254740991
+                      additionalProperties: false
                   required:
                     - name
                   additionalProperties: false

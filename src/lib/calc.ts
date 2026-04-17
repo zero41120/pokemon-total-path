@@ -2,7 +2,7 @@ import { calculate, Field, Generations, Move, Pokemon, Side } from "@smogon/calc
 import { NATURES } from "@smogon/calc/dist/data/natures.js";
 import type { GenerationNum, StatID, StatsTable } from "@smogon/calc";
 import { ValidationError } from "./errors";
-import type { CalcRequest, PokemonInput, MoveInput, FieldInput, SideInput } from "./schemas";
+import type { CalcRequest, PokemonInput, PokemonParams, MoveInput, MoveParams, FieldInput, SideInput } from "./schemas";
 
 const FIXED_LEVEL = 50;
 const FIXED_IV = 31;
@@ -62,14 +62,15 @@ function backCalcBase(target: number, stat: StatID, nm: number): number {
 
 function buildPokemon(genNum: GenerationNum, input: PokemonInput): Pokemon {
   const gen = Generations.get(genNum);
-  const resolvedEvs = resolveEvs(input.evs);
+  const p = input.params ?? {};
+  const resolvedEvs = resolveEvs(p.evs);
   const ivs = STAT_ORDER.reduce((acc, k) => ({ ...acc, [k]: FIXED_IV }), {} as Partial<StatsTable>);
 
   let overrides: Record<string, unknown> | undefined;
-  if (input.forceStatsValue && Object.keys(input.forceStatsValue).length > 0) {
-    const { plus, minus } = getNatureMods(input.nature);
+  if (p.forceStatsValue && Object.keys(p.forceStatsValue).length > 0) {
+    const { plus, minus } = getNatureMods(p.nature);
     const baseStats: Partial<StatsTable> = {};
-    for (const [k, v] of Object.entries(input.forceStatsValue) as [StatID, number][]) {
+    for (const [k, v] of Object.entries(p.forceStatsValue) as [StatID, number][]) {
       if (v == null) continue;
       const nm = k === plus ? 1.1 : k === minus ? 0.9 : 1.0;
       baseStats[k] = backCalcBase(v, k, nm);
@@ -81,37 +82,38 @@ function buildPokemon(genNum: GenerationNum, input: PokemonInput): Pokemon {
 
   return new Pokemon(gen, input.name, {
     level: FIXED_LEVEL,
-    ability: input.ability,
-    abilityOn: input.abilityOn,
-    item: input.item,
-    gender: input.gender as never,
-    nature: input.nature,
+    ability: p.ability,
+    abilityOn: p.abilityOn,
+    item: p.item,
+    gender: p.gender as never,
+    nature: p.nature,
     evs: resolvedEvs,
     ivs,
-    boosts: input.boosts as Partial<StatsTable>,
-    curHP: input.currentHp,
-    status: input.status as never,
-    teraType: input.teraType as never,
-    isDynamaxed: input.isDynamaxed,
-    dynamaxLevel: input.dynamaxLevel,
-    alliesFainted: input.alliesFainted,
-    boostedStat: input.boostedStat as never,
-    toxicCounter: input.toxicCounter,
-    moves: input.moves as never,
+    boosts: p.boosts as Partial<StatsTable>,
+    curHP: p.currentHp,
+    status: p.status as never,
+    teraType: p.teraType as never,
+    isDynamaxed: p.isDynamaxed,
+    dynamaxLevel: p.dynamaxLevel,
+    alliesFainted: p.alliesFainted,
+    boostedStat: p.boostedStat as never,
+    toxicCounter: p.toxicCounter,
+    moves: p.moves as never,
     overrides: overrides as never,
   });
 }
 
 function buildMove(genNum: GenerationNum, input: MoveInput): Move {
   const gen = Generations.get(genNum);
+  const p = input.params ?? {};
   return new Move(gen, input.name, {
-    isCrit: input.isCrit,
-    useZ: input.useZ,
-    useMax: input.useMax,
-    isStellarFirstUse: input.isStellarFirstUse,
-    hits: input.hits,
-    timesUsed: input.timesUsed,
-    timesUsedWithMetronome: input.timesUsedWithMetronome,
+    isCrit: p.isCrit,
+    useZ: p.useZ,
+    useMax: p.useMax,
+    isStellarFirstUse: p.isStellarFirstUse,
+    hits: p.hits,
+    timesUsed: p.timesUsed,
+    timesUsedWithMetronome: p.timesUsedWithMetronome,
   });
 }
 
@@ -142,12 +144,11 @@ function buildField(format: "Singles" | "Doubles", input?: FieldInput): Field {
 
 function formatStats(
   pokemon: Pokemon,
-  inputEvs: StatsObj | undefined,
-  forced: StatsObj | null | undefined,
-  nature: string | undefined,
+  params: PokemonParams | undefined,
 ): string {
-  const { plus, minus } = getNatureMods(nature);
-  const pts = toChampPoints(inputEvs);
+  const { plus, minus } = getNatureMods(params?.nature);
+  const pts = toChampPoints(params?.evs);
+  const forced = params?.forceStatsValue;
 
   const vals = STAT_ORDER.map((stat) => {
     const v = pokemon.stats[stat];
@@ -186,6 +187,7 @@ export function runCalc(request: CalcRequest): CalcResult {
 
   const [minDmg, maxDmg] = result.range();
   const defHp = defender.stats.hp;
+  const defCurHp = defender.curHP();
   const minPct = Math.round((minDmg / defHp) * 1000) / 10;
   const maxPct = Math.round((maxDmg / defHp) * 1000) / 10;
   let ko: { chance: number | undefined; n: number; text: string };
@@ -195,10 +197,26 @@ export function runCalc(request: CalcRequest): CalcResult {
     ko = { chance: undefined, n: 0, text: "" };
   }
 
+  // Post-process KO analysis for multi-hit moves or other edge cases where the underlying lib might be too optimistic.
+  // If the total max damage is less than the defender's current health, it's impossible to KO in 1 turn.
+  if (maxDmg < defCurHp) {
+    ko = { chance: 0, n: 1, text: "not a KO" };
+  }
+
+  let description = result.desc();
+  // If we corrected the KO text to 'not a KO', ensure the description reflects this.
+  if (ko.text === "not a KO" && description.includes("--")) {
+    const parts = description.split(" -- ");
+    if (parts.length > 1) {
+      // The last part is usually the KO chance
+      description = parts.slice(0, -1).join(" -- ") + " -- " + ko.text;
+    }
+  }
+
   return {
-    description: result.desc(),
-    attackerStats: formatStats(attacker, request.attacker.evs, request.attacker.forceStatsValue, request.attacker.nature),
-    defenderStats: formatStats(defender, request.defender.evs, request.defender.forceStatsValue, request.defender.nature),
+    description,
+    attackerStats: formatStats(attacker, request.attacker.params),
+    defenderStats: formatStats(defender, request.defender.params),
     range: [minDmg, maxDmg],
     percent: [minPct, maxPct],
     ko: { chance: ko.chance, n: ko.n, text: ko.text },
