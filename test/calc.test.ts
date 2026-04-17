@@ -6,7 +6,7 @@ const PELIPPER = {
   level: 50,
   item: "Focus Sash",
   ability: "Drizzle",
-  stats: { hp: 135, atk: 70, def: 127, spa: 147, spd: 81, spe: 123 },
+  exactStats:{ hp: 135, atk: 70, def: 127, spa: 147, spd: 81, spe: 123 },
 };
 
 describe("calc service", () => {
@@ -16,7 +16,7 @@ describe("calc service", () => {
       defender: {
         species: "Garchomp",
         level: 50,
-        stats: { hp: 183, atk: 150, def: 115, spa: 90, spd: 105, spe: 122 },
+        exactStats:{ hp: 183, atk: 150, def: 115, spa: 90, spd: 105, spe: 122 },
       },
       move: "Ice Beam",
       field: { weather: "rain" },
@@ -48,7 +48,7 @@ describe("calc service", () => {
       attacker: {
         species: "Tyranitar",
         level: 50,
-        stats: { hp: 175, atk: 204, def: 150, spa: 115, spd: 150, spe: 91 },
+        exactStats:{ hp: 175, atk: 204, def: 150, spa: 115, spd: 150, spe: 91 },
       },
       defender: {
         species: "Sinistcha",
@@ -75,7 +75,7 @@ describe("calc service", () => {
       attacker: {
         species: "Tyranitar",
         level: 50,
-        stats: { hp: 175, atk: 187, def: 140, spa: 103, spd: 150, spe: 91 },
+        exactStats:{ hp: 175, atk: 187, def: 140, spa: 103, spd: 150, spe: 91 },
       },
       defender,
       move: "Knock Off",
@@ -85,7 +85,7 @@ describe("calc service", () => {
       attacker: {
         species: "Tyranitar",
         level: 50,
-        stats: { hp: 175, atk: 204, def: 140, spa: 103, spd: 150, spe: 91 },
+        exactStats:{ hp: 175, atk: 204, def: 140, spa: 103, spd: 150, spe: 91 },
       },
       defender,
       move: "Knock Off",

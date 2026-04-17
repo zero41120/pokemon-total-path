@@ -55,10 +55,10 @@ export async function resolveCombatant(input: CombatantInput): Promise<ResolvedC
     ? mergeChampionsPoints(input.championsPoints)
     : undefined;
 
-  let stats = input.stats!;
+  let stats = input.exactStats!;
   let sourceType: ResolvedCombatant["source"] = "exact-stats";
 
-  if (!input.stats && championsPoints) {
+  if (!input.exactStats && championsPoints) {
     stats = calculateChampionsStats(input.species, input.level ?? 50, championsPoints, nature);
     sourceType = "champions-points";
   }

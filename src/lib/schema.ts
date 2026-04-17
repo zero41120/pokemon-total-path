@@ -13,7 +13,7 @@ export type CombatantInput = {
   item?: string;
   ability?: string;
   moves?: string[];
-  stats?: ExactStats;
+  exactStats?: ExactStats;
   championsPoints?: ChampionsPoints;
   nature?: string;
   currentHP?: number;
@@ -147,7 +147,7 @@ export function parseCombatant(value: unknown, field: string): CombatantInput {
     }
     combatant.moves = value.moves;
   }
-  if (value.stats !== undefined) combatant.stats = parseStats(value.stats, `${field}.stats`);
+  if (value.exactStats !== undefined) combatant.exactStats = parseStats(value.exactStats, `${field}.exactStats`);
   if (value.championsPoints !== undefined) {
     combatant.championsPoints = parseChampionsPoints(value.championsPoints, `${field}.championsPoints`);
   }
@@ -161,8 +161,8 @@ export function parseCombatant(value: unknown, field: string): CombatantInput {
   if (value.status !== undefined) combatant.status = assertString(value.status, `${field}.status`);
   if (value.teraType !== undefined) combatant.teraType = assertString(value.teraType, `${field}.teraType`);
 
-  if (!combatant.stats && !combatant.championsPoints) {
-    throw new ValidationError(`${field} requires stats or championsPoints`);
+  if (!combatant.exactStats && !combatant.championsPoints) {
+    throw new ValidationError(`${field} requires exactStats or championsPoints`);
   }
 
   return combatant;
