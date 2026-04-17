@@ -11,20 +11,17 @@ const statsShape = {
 
 export const StatsObjSchema = z.object(statsShape);
 
+export const BoostsSchema = z.object({
+  atk: z.number().int().min(-6).max(6).optional(),
+  def: z.number().int().min(-6).max(6).optional(),
+  spa: z.number().int().min(-6).max(6).optional(),
+  spd: z.number().int().min(-6).max(6).optional(),
+  spe: z.number().int().min(-6).max(6).optional(),
+});
+
 export const PokemonParamsSchema = z.object({
-  nature: z.string().optional(),
-  ability: z.string().optional(),
   abilityOn: z.boolean().optional(),
-  item: z.string().optional(),
   gender: z.enum(["M", "F", "N"]).optional(),
-  evs: StatsObjSchema.optional(),
-  boosts: z.object({
-    atk: z.number().int().min(-6).max(6).optional(),
-    def: z.number().int().min(-6).max(6).optional(),
-    spa: z.number().int().min(-6).max(6).optional(),
-    spd: z.number().int().min(-6).max(6).optional(),
-    spe: z.number().int().min(-6).max(6).optional(),
-  }).optional(),
   status: z.enum(["", "brn", "par", "psn", "tox", "slp", "frz"]).optional(),
   currentHp: z.number().int().min(0).optional(),
   alliesFainted: z.number().int().min(0).max(5).optional(),
@@ -46,21 +43,26 @@ export const PokemonParamsSchema = z.object({
 
 export const PokemonInputSchema = z.object({
   name: z.string(),
+  nature: z.string().optional(),
+  ability: z.string().optional(),
+  item: z.string().optional(),
+  evs: StatsObjSchema.optional(),
+  boosts: BoostsSchema.optional(),
   params: PokemonParamsSchema.optional(),
 });
 
 export const MoveParamsSchema = z.object({
-  isCrit: z.boolean().optional(),
   useZ: z.boolean().optional(),
   useMax: z.boolean().optional(),
   isStellarFirstUse: z.boolean().optional(),
-  hits: z.number().int().min(1).optional(),
   timesUsed: z.number().int().min(1).optional(),
   timesUsedWithMetronome: z.number().int().min(1).optional(),
 });
 
 export const MoveInputSchema = z.object({
   name: z.string(),
+  isCrit: z.boolean().optional(),
+  hits: z.number().int().min(1).optional(),
   params: MoveParamsSchema.optional(),
 });
 

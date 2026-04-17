@@ -33,75 +33,75 @@ paths:
                   properties:
                     name:
                       type: string
+                    nature:
+                      type: string
+                    ability:
+                      type: string
+                    item:
+                      type: string
+                    evs:
+                      type: object
+                      properties:
+                        hp:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        atk:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        def:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        spa:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        spd:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        spe:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                      additionalProperties: false
+                    boosts:
+                      type: object
+                      properties:
+                        atk:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                        def:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                        spa:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                        spd:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                        spe:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                      additionalProperties: false
                     params:
                       type: object
                       properties:
-                        nature:
-                          type: string
-                        ability:
-                          type: string
                         abilityOn:
                           type: boolean
-                        item:
-                          type: string
                         gender:
                           type: string
                           enum:
                             - M
                             - F
                             - N
-                        evs:
-                          type: object
-                          properties:
-                            hp:
-                              type: integer
-                              minimum: 0
-                              maximum: 252
-                            atk:
-                              type: integer
-                              minimum: 0
-                              maximum: 252
-                            def:
-                              type: integer
-                              minimum: 0
-                              maximum: 252
-                            spa:
-                              type: integer
-                              minimum: 0
-                              maximum: 252
-                            spd:
-                              type: integer
-                              minimum: 0
-                              maximum: 252
-                            spe:
-                              type: integer
-                              minimum: 0
-                              maximum: 252
-                          additionalProperties: false
-                        boosts:
-                          type: object
-                          properties:
-                            atk:
-                              type: integer
-                              minimum: -6
-                              maximum: 6
-                            def:
-                              type: integer
-                              minimum: -6
-                              maximum: 6
-                            spa:
-                              type: integer
-                              minimum: -6
-                              maximum: 6
-                            spd:
-                              type: integer
-                              minimum: -6
-                              maximum: 6
-                            spe:
-                              type: integer
-                              minimum: -6
-                              maximum: 6
-                          additionalProperties: false
                         status:
                           type: string
                           enum:
@@ -185,75 +185,75 @@ paths:
                   properties:
                     name:
                       type: string
+                    nature:
+                      type: string
+                    ability:
+                      type: string
+                    item:
+                      type: string
+                    evs:
+                      type: object
+                      properties:
+                        hp:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        atk:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        def:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        spa:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        spd:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        spe:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                      additionalProperties: false
+                    boosts:
+                      type: object
+                      properties:
+                        atk:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                        def:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                        spa:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                        spd:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                        spe:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                      additionalProperties: false
                     params:
                       type: object
                       properties:
-                        nature:
-                          type: string
-                        ability:
-                          type: string
                         abilityOn:
                           type: boolean
-                        item:
-                          type: string
                         gender:
                           type: string
                           enum:
                             - M
                             - F
                             - N
-                        evs:
-                          type: object
-                          properties:
-                            hp:
-                              type: integer
-                              minimum: 0
-                              maximum: 252
-                            atk:
-                              type: integer
-                              minimum: 0
-                              maximum: 252
-                            def:
-                              type: integer
-                              minimum: 0
-                              maximum: 252
-                            spa:
-                              type: integer
-                              minimum: 0
-                              maximum: 252
-                            spd:
-                              type: integer
-                              minimum: 0
-                              maximum: 252
-                            spe:
-                              type: integer
-                              minimum: 0
-                              maximum: 252
-                          additionalProperties: false
-                        boosts:
-                          type: object
-                          properties:
-                            atk:
-                              type: integer
-                              minimum: -6
-                              maximum: 6
-                            def:
-                              type: integer
-                              minimum: -6
-                              maximum: 6
-                            spa:
-                              type: integer
-                              minimum: -6
-                              maximum: 6
-                            spd:
-                              type: integer
-                              minimum: -6
-                              maximum: 6
-                            spe:
-                              type: integer
-                              minimum: -6
-                              maximum: 6
-                          additionalProperties: false
                         status:
                           type: string
                           enum:
@@ -337,21 +337,21 @@ paths:
                   properties:
                     name:
                       type: string
+                    isCrit:
+                      type: boolean
+                    hits:
+                      type: integer
+                      minimum: 1
+                      maximum: 9007199254740991
                     params:
                       type: object
                       properties:
-                        isCrit:
-                          type: boolean
                         useZ:
                           type: boolean
                         useMax:
                           type: boolean
                         isStellarFirstUse:
                           type: boolean
-                        hits:
-                          type: integer
-                          minimum: 1
-                          maximum: 9007199254740991
                         timesUsed:
                           type: integer
                           minimum: 1

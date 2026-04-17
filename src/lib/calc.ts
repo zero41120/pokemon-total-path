@@ -2,7 +2,7 @@ import { calculate, Field, Generations, Move, Pokemon, Side } from "@smogon/calc
 import { NATURES } from "@smogon/calc/dist/data/natures.js";
 import type { GenerationNum, StatID, StatsTable } from "@smogon/calc";
 import { ValidationError } from "./errors";
-import type { CalcRequest, PokemonInput, PokemonParams, MoveInput, MoveParams, FieldInput, SideInput } from "./schemas";
+import type { CalcRequest, PokemonInput, MoveInput, FieldInput, SideInput } from "./schemas";
 
 const FIXED_LEVEL = 50;
 const FIXED_IV = 31;
@@ -63,12 +63,12 @@ function backCalcBase(target: number, stat: StatID, nm: number): number {
 function buildPokemon(genNum: GenerationNum, input: PokemonInput): Pokemon {
   const gen = Generations.get(genNum);
   const p = input.params ?? {};
-  const resolvedEvs = resolveEvs(p.evs);
+  const resolvedEvs = resolveEvs(input.evs);
   const ivs = STAT_ORDER.reduce((acc, k) => ({ ...acc, [k]: FIXED_IV }), {} as Partial<StatsTable>);
 
   let overrides: Record<string, unknown> | undefined;
   if (p.forceStatsValue && Object.keys(p.forceStatsValue).length > 0) {
-    const { plus, minus } = getNatureMods(p.nature);
+    const { plus, minus } = getNatureMods(input.nature);
     const baseStats: Partial<StatsTable> = {};
     for (const [k, v] of Object.entries(p.forceStatsValue) as [StatID, number][]) {
       if (v == null) continue;
@@ -82,14 +82,14 @@ function buildPokemon(genNum: GenerationNum, input: PokemonInput): Pokemon {
 
   return new Pokemon(gen, input.name, {
     level: FIXED_LEVEL,
-    ability: p.ability,
+    ability: input.ability,
     abilityOn: p.abilityOn,
-    item: p.item,
+    item: input.item,
     gender: p.gender as never,
-    nature: p.nature,
+    nature: input.nature,
     evs: resolvedEvs,
     ivs,
-    boosts: p.boosts as Partial<StatsTable>,
+    boosts: input.boosts as Partial<StatsTable>,
     curHP: p.currentHp,
     status: p.status as never,
     teraType: p.teraType as never,
@@ -107,11 +107,11 @@ function buildMove(genNum: GenerationNum, input: MoveInput): Move {
   const gen = Generations.get(genNum);
   const p = input.params ?? {};
   return new Move(gen, input.name, {
-    isCrit: p.isCrit,
+    isCrit: input.isCrit,
     useZ: p.useZ,
     useMax: p.useMax,
     isStellarFirstUse: p.isStellarFirstUse,
-    hits: p.hits,
+    hits: input.hits,
     timesUsed: p.timesUsed,
     timesUsedWithMetronome: p.timesUsedWithMetronome,
   });
@@ -144,11 +144,11 @@ function buildField(format: "Singles" | "Doubles", input?: FieldInput): Field {
 
 function formatStats(
   pokemon: Pokemon,
-  params: PokemonParams | undefined,
+  input: PokemonInput,
 ): string {
-  const { plus, minus } = getNatureMods(params?.nature);
-  const pts = toChampPoints(params?.evs);
-  const forced = params?.forceStatsValue;
+  const { plus, minus } = getNatureMods(input.nature);
+  const pts = toChampPoints(input.evs);
+  const forced = input.params?.forceStatsValue;
 
   const vals = STAT_ORDER.map((stat) => {
     const v = pokemon.stats[stat];
@@ -215,8 +215,8 @@ export function runCalc(request: CalcRequest): CalcResult {
 
   return {
     description,
-    attackerStats: formatStats(attacker, request.attacker.params),
-    defenderStats: formatStats(defender, request.defender.params),
+    attackerStats: formatStats(attacker, request.attacker),
+    defenderStats: formatStats(defender, request.defender),
     range: [minDmg, maxDmg],
     percent: [minPct, maxPct],
     ko: { chance: ko.chance, n: ko.n, text: ko.text },
