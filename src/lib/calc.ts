@@ -90,11 +90,7 @@ function buildResolvedDescription(
 export async function runCalc(request: CalcRequest) {
   const attacker = await toCalcPokemon(request.attacker);
   const defender = await toCalcPokemon(request.defender);
-  const forcedWeather = attacker.resolved.forcedWeather ?? defender.resolved.forcedWeather;
-  const field = createField({
-    ...request.field,
-    weather: forcedWeather ?? request.field?.weather,
-  });
+  const field = createField(request.field);
   const move = createMove(
     request.move,
     attacker.resolved.calcSpecies,
@@ -121,13 +117,13 @@ export async function runCalc(request: CalcRequest) {
       name: attacker.resolved.displayName,
       stats: formatStats(attacker.resolved.stats, attacker.resolved.nature, attacker.resolved.championsPoints),
       item: attacker.resolved.item ?? null,
-      ability: attacker.resolved.displayAbility ?? attacker.resolved.ability ?? attacker.resolved.megaAbility ?? null,
+      ability: attacker.resolved.displayAbility ?? attacker.resolved.ability ?? null,
     },
     defender: {
       name: defender.resolved.displayName,
       stats: formatStats(defender.resolved.stats, defender.resolved.nature, defender.resolved.championsPoints),
       item: defender.resolved.item ?? null,
-      ability: defender.resolved.displayAbility ?? defender.resolved.ability ?? defender.resolved.megaAbility ?? null,
+      ability: defender.resolved.displayAbility ?? defender.resolved.ability ?? null,
     },
     damage: {
       min: damageRange[0],

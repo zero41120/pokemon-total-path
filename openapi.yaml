@@ -74,8 +74,6 @@ components:
           type: string
         ability:
           type: string
-        megaAbility:
-          type: string
         moves:
           type: array
           items:

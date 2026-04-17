@@ -12,7 +12,6 @@ export type CombatantInput = {
   level?: number;
   item?: string;
   ability?: string;
-  megaAbility?: string;
   moves?: string[];
   stats?: ExactStats;
   championsPoints?: ChampionsPoints;
@@ -142,7 +141,6 @@ export function parseCombatant(value: unknown, field: string): CombatantInput {
   }
   if (value.item !== undefined) combatant.item = assertString(value.item, `${field}.item`);
   if (value.ability !== undefined) combatant.ability = assertString(value.ability, `${field}.ability`);
-  if (value.megaAbility !== undefined) combatant.megaAbility = assertString(value.megaAbility, `${field}.megaAbility`);
   if (value.moves !== undefined) {
     if (!Array.isArray(value.moves) || value.moves.some((move) => typeof move !== "string")) {
       throw new ValidationError(`Expected string array for ${field}.moves`);

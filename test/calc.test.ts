@@ -9,15 +9,6 @@ const PELIPPER = {
   stats: { hp: 135, atk: 70, def: 127, spa: 147, spd: 81, spe: 123 },
 };
 
-const MEGANIUM_MEGA = {
-  species: "Meganium-Mega",
-  baseSpecies: "Meganium",
-  level: 50,
-  item: "Meganiumite",
-  megaAbility: "Mega Sol",
-  stats: { hp: 179, atk: 91, def: 120, spa: 119, spd: 120, spe: 138 },
-};
-
 describe("calc service", () => {
   test("runs a benchmark calc and preserves exact stats", async () => {
     const result = await runCalc({
@@ -50,22 +41,6 @@ describe("calc service", () => {
     expect(result.attacker.nature).toBe(undefined); // nature encoded in stats string
     expect(result.attacker.stats).toContain("+"); // Bold: def+
     expect(result.attacker.stats).toContain("-"); // Bold: atk-
-  });
-
-  test("forces sun when Mega Sol is active", async () => {
-    const result = await runCalc({
-      attacker: MEGANIUM_MEGA,
-      defender: {
-        species: "Pelipper",
-        level: 50,
-        ability: "Drizzle",
-        stats: { hp: 135, atk: 70, def: 127, spa: 147, spd: 81, spe: 123 },
-      },
-      move: "Weather Ball",
-      field: { weather: "rain" },
-    });
-
-    expect(result.attacker.ability).toBe("Mega Sol");
   });
 
   test("engine description reflects resolved stats instead of EV-style placeholders", async () => {

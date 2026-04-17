@@ -13,12 +13,10 @@ export type ResolvedCombatant = {
   item?: string;
   ability?: string;
   displayAbility?: string;
-  megaAbility?: string;
   stats: ExactStats;
   source: "exact-stats" | "champions-points";
   championsPoints?: Partial<Record<"hp" | "atk" | "def" | "spa" | "spd" | "spe", number>>;
   nature?: string;
-  forcedWeather?: string;
   moves?: string[];
   currentHP?: number;
   boosts?: CombatantInput["boosts"];
@@ -51,14 +49,7 @@ function calculateChampionsStats(speciesName: string, level: number, points: Rec
   };
 }
 
-function resolveAbility(ability?: string) {
-  if (!ability || ability === "Mega Sol") return { calcAbility: undefined };
-  return { calcAbility: ability };
-}
-
 export async function resolveCombatant(input: CombatantInput): Promise<ResolvedCombatant> {
-  const { calcAbility } = resolveAbility(input.megaAbility ?? input.ability);
-  const displayAbility = input.megaAbility ?? input.ability;
   const nature = input.nature ?? "Serious";
   const championsPoints = input.championsPoints
     ? mergeChampionsPoints(input.championsPoints)
@@ -77,14 +68,12 @@ export async function resolveCombatant(input: CombatantInput): Promise<ResolvedC
     calcSpecies: input.baseSpecies ?? input.species,
     level: input.level ?? 50,
     item: input.item,
-    ability: calcAbility,
-    displayAbility,
-    megaAbility: input.megaAbility,
+    ability: input.ability,
+    displayAbility: input.ability,
     stats,
     source: sourceType,
     championsPoints,
     nature,
-    forcedWeather: displayAbility === "Mega Sol" ? "Sun" : undefined,
     moves: input.moves,
     currentHP: input.currentHP,
     boosts: input.boosts,
