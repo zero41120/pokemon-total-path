@@ -49,6 +49,16 @@ export type CalcRequest = {
 };
 
 const STAT_IDS: StatID[] = ["hp", "atk", "def", "spa", "spd", "spe"];
+const CHAMPIONS_POINTS_VALIDATION_DETAILS = {
+  hint: "Pokemon Champions uses Champions Points instead of EVs.",
+  championsPointsRules: {
+    fixedIVs: 31,
+    level: 50,
+    totalPool: 66,
+    statCap: 32,
+    ratio: "1 Champions Point = +1 final level 50 stat",
+  },
+};
 
 export function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -79,7 +89,10 @@ export function parseStats(value: unknown, field: string): ExactStats {
 
 export function parseChampionsPoints(value: unknown, field: string): ChampionsPoints {
   if (!isPlainObject(value)) {
-    throw new ValidationError(`Expected championsPoints object for ${field}`);
+    throw new ValidationError(
+      `Expected championsPoints object for ${field}`,
+      CHAMPIONS_POINTS_VALIDATION_DETAILS,
+    );
   }
 
   const points: ChampionsPoints = {};
@@ -88,14 +101,20 @@ export function parseChampionsPoints(value: unknown, field: string): ChampionsPo
     const raw = value[stat];
     if (raw === undefined) continue;
     if (!Number.isInteger(raw) || raw < 0 || raw > 32) {
-      throw new ValidationError(`Expected integer 0-32 for ${field}.${stat}`);
+      throw new ValidationError(
+        `Expected integer 0-32 for ${field}.${stat}`,
+        CHAMPIONS_POINTS_VALIDATION_DETAILS,
+      );
     }
     points[stat] = raw;
     total += raw;
   }
 
   if (total > 66) {
-    throw new ValidationError(`${field} total cannot exceed 66 points`);
+    throw new ValidationError(
+      `${field} total cannot exceed 66 points`,
+      CHAMPIONS_POINTS_VALIDATION_DETAILS,
+    );
   }
 
   return points;
