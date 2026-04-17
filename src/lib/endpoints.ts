@@ -8,6 +8,8 @@ export type RestEndpoint = {
   method: "GET" | "POST";
   path: string;
   inputSchema: z.ZodTypeAny;
+  mcpInputSchema?: z.ZodTypeAny;
+  toMcpRequestBody?: (args: unknown) => unknown;
 };
 
 export const REST_ENDPOINTS: RestEndpoint[] = [

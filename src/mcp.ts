@@ -7,6 +7,8 @@ import express, {
 } from "express";
 import type { RestEndpoint } from "./lib/endpoints";
 import { REST_ENDPOINTS } from "./lib/endpoints";
+import type { CalcMcpRequest, CalcRequest } from "./lib/schemas";
+import { CalcMcpRequestSchema } from "./lib/schemas";
 
 export { REST_ENDPOINTS };
 export type { RestEndpoint };
@@ -86,17 +88,53 @@ export function createMcpWrapperServer(restBaseUrl: string) {
       {
         title: endpoint.title,
         description: endpoint.description,
-        inputSchema: endpoint.inputSchema,
+        inputSchema: endpoint.mcpInputSchema ?? endpoint.inputSchema,
       },
       async (args) =>
         toToolResult(
           endpoint,
-          await proxyRestEndpoint(restBaseUrl, endpoint, args),
+          await proxyRestEndpoint(
+            restBaseUrl,
+            endpoint,
+            endpoint.toMcpRequestBody ? endpoint.toMcpRequestBody(args) : args,
+          ),
         ),
     );
   }
 
   return server;
+}
+
+function toCalcRestBody(args: unknown): CalcRequest {
+  const parsed = CalcMcpRequestSchema.parse(args) as CalcMcpRequest;
+
+  return {
+    format: parsed.format,
+    gen: parsed.gen,
+    attacker: {
+      ...parsed.attacker,
+      optionalParameterIgnoreUnlessNecessary:
+        parsed.attackerOptionalParameterIgnoreUnlessNecessary,
+    },
+    defender: {
+      ...parsed.defender,
+      optionalParameterIgnoreUnlessNecessary:
+        parsed.defenderOptionalParameterIgnoreUnlessNecessary,
+    },
+    move: {
+      ...parsed.move,
+      optionalParameterIgnoreUnlessNecessary:
+        parsed.moveOptionalParameterIgnoreUnlessNecessary,
+    },
+    field: parsed.field,
+  };
+}
+
+const calcEndpoint = REST_ENDPOINTS.find((endpoint) => endpoint.toolName === "calc");
+
+if (calcEndpoint) {
+  calcEndpoint.mcpInputSchema = CalcMcpRequestSchema;
+  calcEndpoint.toMcpRequestBody = toCalcRestBody;
 }
 
 function methodNotAllowed(res: ExpressResponse) {

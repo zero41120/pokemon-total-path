@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { REST_ENDPOINTS, startMcpServer } from "../src/mcp";
 import * as z from "zod/v4";
+import { CalcMcpRequestSchema } from "../src/lib/schemas";
 
 const originalFetch = globalThis.fetch;
 
@@ -35,6 +36,21 @@ describe("mcp wrapper", () => {
     expect(schema.properties.attacker.required).toEqual(["name"]);
     expect(schema.properties.defender.required).toEqual(["name"]);
     expect(schema.properties.move.required).toEqual(["name"]);
+  });
+
+  test("mcp schema exposes advanced params as top-level optional fields", () => {
+    const schema = z.toJSONSchema(CalcMcpRequestSchema, { reused: "inline" }) as {
+      required?: string[];
+      properties: Record<string, unknown>;
+    };
+
+    expect(schema.properties.attackerOptionalParameterIgnoreUnlessNecessary).toBeDefined();
+    expect(schema.properties.defenderOptionalParameterIgnoreUnlessNecessary).toBeDefined();
+    expect(schema.properties.moveOptionalParameterIgnoreUnlessNecessary).toBeDefined();
+    expect(schema.required).toEqual(["format", "attacker", "defender", "move"]);
+    expect(schema.required).not.toContain("attackerOptionalParameterIgnoreUnlessNecessary");
+    expect(schema.required).not.toContain("defenderOptionalParameterIgnoreUnlessNecessary");
+    expect(schema.required).not.toContain("moveOptionalParameterIgnoreUnlessNecessary");
   });
 
   test("acknowledges notifications/initialized", async () => {
