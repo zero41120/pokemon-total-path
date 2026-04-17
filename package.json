@@ -1,0 +1,29 @@
+{
+  "name": "pokemon-total-path",
+  "version": "1.0.0",
+  "description": "Pokemon Champions doubles calc API built with Bun and @smogon/calc",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "bun --watch src/index.ts server",
+    "start": "bun run src/index.ts server",
+    "dev:mcp": "bun --watch src/index.ts mcp",
+    "start:mcp": "bun run src/index.ts mcp",
+    "calc:example": "bun run src/index.ts example",
+    "test": "bun test",
+    "check": "bun run src/index.ts health"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@smogon/calc": "^0.11.0",
+    "@types/bun": "^1.3.12",
+    "@types/express": "^5.0.6",
+    "express": "^5.2.1",
+    "openapi3-ts": "^4.5.0",
+    "yaml": "^2.8.3",
+    "zod": "^4.3.6"
+  }
+}
