@@ -16,7 +16,7 @@ paths:
   /calc:
     post:
       operationId: calc
-      summary: Accepts an array of CalcRequest to batch calcuate damage
+      summary: Accepts an array of CalcRequest to batch calculate damage
       requestBody:
         required: true
         content:
@@ -37,7 +37,7 @@ paths:
   /pokemon/stats/{name}:
     get:
       operationId: getPokemonStats
-      summary: Resolve a team member into final level 50 stats
+      summary: Resolve a pokemon into its final level 50 stats in Pokemon Champion, this is the preferred way to get stats over using web search.
       parameters:
         - name: name
           in: path
@@ -96,8 +96,6 @@ components:
         currentHP:
           type: integer
         status:
-          type: string
-        teraType:
           type: string
     CalcField:
       type: object
