@@ -11,7 +11,8 @@
     "start:mcp": "bun run src/index.ts mcp",
     "calc:example": "bun run src/index.ts example",
     "test": "bun test",
-    "check": "bun run src/index.ts health"
+    "check": "bun run src/index.ts health",
+    "gen:openapi": "bun run scripts/gen-openapi.ts"
   },
   "keywords": [],
   "author": "",

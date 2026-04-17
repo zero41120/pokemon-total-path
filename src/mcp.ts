@@ -1,164 +1,21 @@
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import express, { type Request as ExpressRequest, type Response as ExpressResponse } from "express";
-import { readFileSync } from "node:fs";
-import type { OpenAPIObject, OperationObject, ParameterObject, ReferenceObject, SchemaObject } from "openapi3-ts/oas31";
-import YAML from "yaml";
-import * as z from "zod/v4";
+import express, {
+  type Request as ExpressRequest,
+  type Response as ExpressResponse,
+} from "express";
+import type { RestEndpoint } from "./lib/endpoints";
+import { REST_ENDPOINTS } from "./lib/endpoints";
 
-type HttpMethod = "GET" | "POST";
-
-export type RestEndpoint = {
-  toolName: string;
-  title: string;
-  description: string;
-  method: HttpMethod;
-  path: string;
-  inputSchema: z.ZodTypeAny;
-};
-
-const OPENAPI_YAML = readFileSync(new URL("../openapi.yaml", import.meta.url), "utf8");
-
-function loadOpenApiDocument() {
-  return YAML.parse(OPENAPI_YAML) as OpenAPIObject;
-}
-
-function toToolName(operationId: string | undefined, method: HttpMethod, path: string) {
-  const base = operationId ?? `${method.toLowerCase()}_${path}`;
-  return base
-    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
-    .replace(/[^a-zA-Z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .toLowerCase();
-}
-
-function resolveRef(schema: SchemaObject | ReferenceObject, document: OpenAPIObject): SchemaObject {
-  if (!schema.$ref) {
-    return schema as SchemaObject;
-  }
-
-  const prefix = "#/components/schemas/";
-  if (!schema.$ref.startsWith(prefix)) {
-    throw new Error(`Unsupported OpenAPI ref: ${schema.$ref}`);
-  }
-
-  const key = schema.$ref.slice(prefix.length);
-  const resolved = document.components?.schemas?.[key];
-  if (!resolved) {
-    throw new Error(`Missing OpenAPI schema component: ${key}`);
-  }
-
-  return resolved as SchemaObject;
-}
-
-function withSharedConstraints(zodSchema: z.ZodTypeAny, definition: SchemaObject) {
-  if (definition.description && "meta" in zodSchema && typeof zodSchema.meta === "function") {
-    return zodSchema.meta({ description: definition.description });
-  }
-  return zodSchema;
-}
-
-function openApiSchemaToZod(definition: SchemaObject | ReferenceObject | undefined, document: OpenAPIObject): z.ZodTypeAny {
-  if (!definition) {
-    return z.unknown();
-  }
-
-  const schema = resolveRef(definition, document);
-
-  if (schema.enum && schema.enum.length > 0) {
-    const literals = (schema.enum as Array<string | number | boolean>).map((value) => z.literal(value));
-    const literalSchema = literals.length === 1 ? literals[0] : z.union(literals as [typeof literals[0], typeof literals[0], ...typeof literals]);
-    return withSharedConstraints(literalSchema, schema);
-  }
-
-  const type = Array.isArray(schema.type) ? schema.type[0] : schema.type;
-  switch (type) {
-    case "string": {
-      let result = z.string();
-      if (schema.minLength !== undefined) result = result.min(schema.minLength);
-      if (schema.maxLength !== undefined) result = result.max(schema.maxLength);
-      return withSharedConstraints(result, schema);
-    }
-    case "integer": {
-      let result = z.number().int();
-      if (schema.minimum !== undefined) result = result.min(schema.minimum as number);
-      if (schema.maximum !== undefined) result = result.max(schema.maximum as number);
-      return withSharedConstraints(result, schema);
-    }
-    case "number": {
-      let result = z.number();
-      if (schema.minimum !== undefined) result = result.min(schema.minimum as number);
-      if (schema.maximum !== undefined) result = result.max(schema.maximum as number);
-      return withSharedConstraints(result, schema);
-    }
-    case "boolean":
-      return withSharedConstraints(z.boolean(), schema);
-    case "array":
-      return withSharedConstraints(z.array(openApiSchemaToZod(schema.items, document)), schema);
-    case "object":
-    case undefined: {
-      const shape = Object.fromEntries(
-        Object.entries(schema.properties ?? {}).map(([key, property]) => {
-          const propertySchema = openApiSchemaToZod(property as SchemaObject | ReferenceObject, document);
-          const required = schema.required?.includes(key) ?? false;
-          return [key, required ? propertySchema : propertySchema.optional()];
-        }),
-      );
-      return withSharedConstraints(z.object(shape).passthrough(), schema);
-    }
-    default:
-      return withSharedConstraints(z.unknown(), schema);
-  }
-}
-
-function operationInputSchema(operation: OperationObject, document: OpenAPIObject) {
-  const requestBody = operation.requestBody && !("$ref" in operation.requestBody) ? operation.requestBody : undefined;
-  const bodySchema = requestBody?.content?.["application/json"]?.schema as SchemaObject | ReferenceObject | undefined;
-  if (bodySchema) {
-    return openApiSchemaToZod(bodySchema, document);
-  }
-
-  const pathParams = (operation.parameters ?? []).filter((p): p is ParameterObject => !("$ref" in p) && p.in === "path");
-  if (pathParams.length > 0) {
-    const shape = Object.fromEntries(
-      pathParams.map((p) => {
-        const schema = openApiSchemaToZod(p.schema as SchemaObject | undefined, document);
-        return [p.name, p.required ? schema : schema.optional()];
-      }),
-    );
-    return z.object(shape);
-  }
-
-  return z.object({});
-}
-
-const OPENAPI_DOCUMENT = loadOpenApiDocument();
-export { OPENAPI_YAML };
-
-export const REST_ENDPOINTS: RestEndpoint[] = Object.entries(OPENAPI_DOCUMENT.paths ?? {}).flatMap(([path, operations]) => {
-  return (["get", "post"] as const).flatMap((method) => {
-    const operation = operations[method] as OperationObject | undefined;
-    if (!operation) {
-      return [];
-    }
-
-    const upperMethod = method.toUpperCase() as HttpMethod;
-    return [
-      {
-        toolName: toToolName(operation.operationId, upperMethod, path),
-        title: operation.summary ?? operation.operationId ?? `${upperMethod} ${path}`,
-        description: operation.description ?? operation.summary ?? `${upperMethod} ${path}`,
-        method: upperMethod,
-        path,
-        inputSchema: operationInputSchema(operation, OPENAPI_DOCUMENT),
-      },
-    ];
-  });
-});
+export { REST_ENDPOINTS };
+export type { RestEndpoint };
 
 function toAbsoluteUrl(baseUrl: string, path: string) {
-  return new URL(path, baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`).toString();
+  return new URL(
+    path,
+    baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`,
+  ).toString();
 }
 
 async function parseRestResponse(response: globalThis.Response) {
@@ -166,33 +23,46 @@ async function parseRestResponse(response: globalThis.Response) {
   if (contentType.includes("application/json")) {
     return await response.json();
   }
-
   return await response.text();
 }
 
-export async function proxyRestEndpoint(baseUrl: string, endpoint: RestEndpoint, body?: unknown) {
-  const params = (body && typeof body === "object" && !Array.isArray(body)) ? body as Record<string, unknown> : {};
-  const resolvedPath = endpoint.path.replace(/\{(\w+)\}/g, (_, key) => encodeURIComponent(String(params[key] ?? "")));
+export async function proxyRestEndpoint(
+  baseUrl: string,
+  endpoint: RestEndpoint,
+  body?: unknown,
+) {
+  const params =
+    body && typeof body === "object" && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : {};
+  const resolvedPath = endpoint.path.replace(/\{(\w+)\}/g, (_, key) =>
+    encodeURIComponent(String(params[key] ?? "")),
+  );
   const response = await fetch(toAbsoluteUrl(baseUrl, resolvedPath), {
     method: endpoint.method,
-    headers: endpoint.method === "POST" ? { "content-type": "application/json" } : undefined,
+    headers:
+      endpoint.method === "POST"
+        ? { "content-type": "application/json" }
+        : undefined,
     body: endpoint.method === "POST" ? JSON.stringify(body ?? {}) : undefined,
   });
 
   const result = await parseRestResponse(response);
   if (!response.ok) {
-    const details = typeof result === "string" ? result : JSON.stringify(result, null, 2);
-    throw new Error(`${endpoint.method} ${resolvedPath} failed with ${response.status}: ${details}`);
+    const details =
+      typeof result === "string" ? result : JSON.stringify(result, null, 2);
+    throw new Error(
+      `${endpoint.method} ${resolvedPath} failed with ${response.status}: ${details}`,
+    );
   }
-
   return result;
 }
 
 function toToolResult(endpoint: RestEndpoint, result: unknown) {
-  const structuredContent = (result && typeof result === "object" && !Array.isArray(result))
-    ? result as Record<string, unknown>
-    : { result };
-
+  const structuredContent =
+    result && typeof result === "object" && !Array.isArray(result)
+      ? (result as Record<string, unknown>)
+      : { result };
   return {
     content: [
       {
@@ -206,15 +76,8 @@ function toToolResult(endpoint: RestEndpoint, result: unknown) {
 
 export function createMcpWrapperServer(restBaseUrl: string) {
   const server = new McpServer(
-    {
-      name: OPENAPI_DOCUMENT.info.title ?? "pokemon-champions-calc-mcp",
-      version: OPENAPI_DOCUMENT.info.version ?? "1.0.0",
-    },
-    {
-      capabilities: {
-        logging: {},
-      },
-    },
+    { name: "pokemon-champions-calc-mcp", version: "1.0.0" },
+    { capabilities: { logging: {} } },
   );
 
   for (const endpoint of REST_ENDPOINTS) {
@@ -225,7 +88,11 @@ export function createMcpWrapperServer(restBaseUrl: string) {
         description: endpoint.description,
         inputSchema: endpoint.inputSchema,
       },
-      async (args) => toToolResult(endpoint, await proxyRestEndpoint(restBaseUrl, endpoint, args)),
+      async (args) =>
+        toToolResult(
+          endpoint,
+          await proxyRestEndpoint(restBaseUrl, endpoint, args),
+        ),
     );
   }
 
@@ -233,23 +100,24 @@ export function createMcpWrapperServer(restBaseUrl: string) {
 }
 
 function methodNotAllowed(res: ExpressResponse) {
-  res.status(405).set("Allow", "POST").json({
-    jsonrpc: "2.0",
-    error: {
-      code: -32000,
-      message: "Method not allowed.",
-    },
-    id: null,
-  });
+  res
+    .status(405)
+    .set("Allow", "POST")
+    .json({
+      jsonrpc: "2.0",
+      error: { code: -32000, message: "Method not allowed." },
+      id: null,
+    });
 }
 
 export function startMcpServer({
-  restBaseUrl = Bun.env.REST_BASE_URL ?? `http://127.0.0.1:${Bun.env.REST_PORT ?? "3000"}`,
+  restBaseUrl = Bun.env.REST_BASE_URL ??
+    `http://127.0.0.1:${Bun.env.REST_PORT ?? "3000"}`,
   port = Number(Bun.env.MCP_PORT ?? 3001),
   host = Bun.env.MCP_HOST ?? "127.0.0.1",
   allowedHosts = (Bun.env.MCP_ALLOWED_HOSTS ?? "")
     .split(",")
-    .map((value) => value.trim())
+    .map((v) => v.trim())
     .filter(Boolean),
 }: {
   restBaseUrl?: string;
@@ -268,7 +136,7 @@ export function startMcpServer({
       ok: true,
       service: "pokemon-champions-calc-mcp",
       restBaseUrl,
-      tools: REST_ENDPOINTS.map((endpoint) => endpoint.toolName),
+      tools: REST_ENDPOINTS.map((e) => e.toolName),
     });
   });
 
@@ -281,7 +149,6 @@ export function startMcpServer({
     const server = createMcpWrapperServer(restBaseUrl);
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
-      // enableJsonResponse: true,
     });
 
     try {
@@ -290,14 +157,19 @@ export function startMcpServer({
     } catch (error) {
       console.error("Error handling MCP request:", error);
       if (!res.headersSent) {
-        res.status(500).json({
-          jsonrpc: "2.0",
-          error: {
-            code: -32603,
-            message: error instanceof Error ? error.message : "Internal server error",
-          },
-          id: null,
-        });
+        res
+          .status(500)
+          .json({
+            jsonrpc: "2.0",
+            error: {
+              code: -32603,
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Internal server error",
+            },
+            id: null,
+          });
       }
     } finally {
       await transport.close();
@@ -308,7 +180,6 @@ export function startMcpServer({
   app.get("/mcp", (_req: ExpressRequest, res: ExpressResponse) => {
     methodNotAllowed(res);
   });
-
   app.delete("/mcp", (_req: ExpressRequest, res: ExpressResponse) => {
     methodNotAllowed(res);
   });
@@ -320,13 +191,7 @@ export function startMcpServer({
 
   const shutdown = async () => {
     await new Promise<void>((resolve, reject) => {
-      listener.close((error) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve();
-      });
+      listener.close((error) => (error ? reject(error) : resolve()));
     });
   };
 
@@ -334,7 +199,6 @@ export function startMcpServer({
     await shutdown();
     process.exit(0);
   });
-
   process.once("SIGTERM", async () => {
     await shutdown();
     process.exit(0);

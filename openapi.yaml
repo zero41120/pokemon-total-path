@@ -1,11 +1,517 @@
 openapi: 3.1.0
 info:
   title: Pokemon Champions API
-  version: 0.2.0
-  description: >
-    Pokémon Champions tools API.
+  version: 0.3.0
+  description: Pokémon Champions tools API. Generated from Zod schemas — do not edit by hand.
 servers:
   - url: https://zero41120pokemontools.com
-paths: {}
-components:
-  schemas: {}
+paths:
+  /calc:
+    post:
+      operationId: calc
+      summary: Calculate damage
+      description: Calculate damage between an attacker and defender for a given move and field state. Level and IVs are locked to 50 and 31 (Champions format). EVs with all values ≤ 32 are auto-detected as Champion stat points (×8 conversion, IVs fixed at 31).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $schema: https://json-schema.org/draft/2020-12/schema
+              type: object
+              properties:
+                format:
+                  type: string
+                  enum:
+                    - Singles
+                    - Doubles
+                gen:
+                  type: integer
+                  minimum: 1
+                  maximum: 9
+                attacker:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    nature:
+                      type: string
+                    ability:
+                      type: string
+                    abilityOn:
+                      type: boolean
+                    item:
+                      type: string
+                    gender:
+                      type: string
+                      enum:
+                        - M
+                        - F
+                        - N
+                    evs:
+                      type: object
+                      properties:
+                        hp:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        atk:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        def:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        spa:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        spd:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        spe:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                      additionalProperties: false
+                    boosts:
+                      type: object
+                      properties:
+                        atk:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                        def:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                        spa:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                        spd:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                        spe:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                      additionalProperties: false
+                    status:
+                      type: string
+                      enum:
+                        - ""
+                        - brn
+                        - par
+                        - psn
+                        - tox
+                        - slp
+                        - frz
+                    currentHp:
+                      type: integer
+                      minimum: 0
+                      maximum: 9007199254740991
+                    alliesFainted:
+                      type: integer
+                      minimum: 0
+                      maximum: 5
+                    boostedStat:
+                      type: string
+                      enum:
+                        - atk
+                        - def
+                        - spa
+                        - spd
+                        - spe
+                        - auto
+                    toxicCounter:
+                      type: integer
+                      minimum: 0
+                      maximum: 9007199254740991
+                    moves:
+                      maxItems: 4
+                      type: array
+                      items:
+                        type: string
+                    forceStatsValue:
+                      anyOf:
+                        - type: object
+                          properties:
+                            hp:
+                              type: integer
+                              minimum: 1
+                              maximum: 9007199254740991
+                            atk:
+                              type: integer
+                              minimum: 1
+                              maximum: 9007199254740991
+                            def:
+                              type: integer
+                              minimum: 1
+                              maximum: 9007199254740991
+                            spa:
+                              type: integer
+                              minimum: 1
+                              maximum: 9007199254740991
+                            spd:
+                              type: integer
+                              minimum: 1
+                              maximum: 9007199254740991
+                            spe:
+                              type: integer
+                              minimum: 1
+                              maximum: 9007199254740991
+                          additionalProperties: false
+                        - type: "null"
+                    teraType:
+                      type: string
+                    isDynamaxed:
+                      type: boolean
+                    dynamaxLevel:
+                      type: integer
+                      minimum: 0
+                      maximum: 10
+                  required:
+                    - name
+                  additionalProperties: false
+                defender:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    nature:
+                      type: string
+                    ability:
+                      type: string
+                    abilityOn:
+                      type: boolean
+                    item:
+                      type: string
+                    gender:
+                      type: string
+                      enum:
+                        - M
+                        - F
+                        - N
+                    evs:
+                      type: object
+                      properties:
+                        hp:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        atk:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        def:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        spa:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        spd:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                        spe:
+                          type: integer
+                          minimum: 0
+                          maximum: 252
+                      additionalProperties: false
+                    boosts:
+                      type: object
+                      properties:
+                        atk:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                        def:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                        spa:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                        spd:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                        spe:
+                          type: integer
+                          minimum: -6
+                          maximum: 6
+                      additionalProperties: false
+                    status:
+                      type: string
+                      enum:
+                        - ""
+                        - brn
+                        - par
+                        - psn
+                        - tox
+                        - slp
+                        - frz
+                    currentHp:
+                      type: integer
+                      minimum: 0
+                      maximum: 9007199254740991
+                    alliesFainted:
+                      type: integer
+                      minimum: 0
+                      maximum: 5
+                    boostedStat:
+                      type: string
+                      enum:
+                        - atk
+                        - def
+                        - spa
+                        - spd
+                        - spe
+                        - auto
+                    toxicCounter:
+                      type: integer
+                      minimum: 0
+                      maximum: 9007199254740991
+                    moves:
+                      maxItems: 4
+                      type: array
+                      items:
+                        type: string
+                    forceStatsValue:
+                      anyOf:
+                        - type: object
+                          properties:
+                            hp:
+                              type: integer
+                              minimum: 1
+                              maximum: 9007199254740991
+                            atk:
+                              type: integer
+                              minimum: 1
+                              maximum: 9007199254740991
+                            def:
+                              type: integer
+                              minimum: 1
+                              maximum: 9007199254740991
+                            spa:
+                              type: integer
+                              minimum: 1
+                              maximum: 9007199254740991
+                            spd:
+                              type: integer
+                              minimum: 1
+                              maximum: 9007199254740991
+                            spe:
+                              type: integer
+                              minimum: 1
+                              maximum: 9007199254740991
+                          additionalProperties: false
+                        - type: "null"
+                    teraType:
+                      type: string
+                    isDynamaxed:
+                      type: boolean
+                    dynamaxLevel:
+                      type: integer
+                      minimum: 0
+                      maximum: 10
+                  required:
+                    - name
+                  additionalProperties: false
+                move:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    isCrit:
+                      type: boolean
+                    useZ:
+                      type: boolean
+                    useMax:
+                      type: boolean
+                    isStellarFirstUse:
+                      type: boolean
+                    hits:
+                      type: integer
+                      minimum: 1
+                      maximum: 9007199254740991
+                    timesUsed:
+                      type: integer
+                      minimum: 1
+                      maximum: 9007199254740991
+                    timesUsedWithMetronome:
+                      type: integer
+                      minimum: 1
+                      maximum: 9007199254740991
+                  required:
+                    - name
+                  additionalProperties: false
+                field:
+                  type: object
+                  properties:
+                    weather:
+                      type: string
+                      enum:
+                        - Sun
+                        - Rain
+                        - Sand
+                        - Snow
+                        - Hail
+                        - HarshSun
+                        - HeavyRain
+                        - StrongWinds
+                    terrain:
+                      type: string
+                      enum:
+                        - Electric
+                        - Grassy
+                        - Misty
+                        - Psychic
+                    isMagicRoom:
+                      type: boolean
+                    isWonderRoom:
+                      type: boolean
+                    isGravity:
+                      type: boolean
+                    isAuraBreak:
+                      type: boolean
+                    isFairyAura:
+                      type: boolean
+                    isDarkAura:
+                      type: boolean
+                    isBeadsOfRuin:
+                      type: boolean
+                    isSwordOfRuin:
+                      type: boolean
+                    isTabletsOfRuin:
+                      type: boolean
+                    isVesselOfRuin:
+                      type: boolean
+                    attackerSide:
+                      type: object
+                      properties:
+                        spikes:
+                          type: integer
+                          minimum: 0
+                          maximum: 3
+                        steelsurge:
+                          type: boolean
+                        vinelash:
+                          type: boolean
+                        wildfire:
+                          type: boolean
+                        cannonade:
+                          type: boolean
+                        volcalith:
+                          type: boolean
+                        isSR:
+                          type: boolean
+                        isReflect:
+                          type: boolean
+                        isLightScreen:
+                          type: boolean
+                        isAuroraVeil:
+                          type: boolean
+                        isProtected:
+                          type: boolean
+                        isSeeded:
+                          type: boolean
+                        isSaltCured:
+                          type: boolean
+                        isForesight:
+                          type: boolean
+                        isTailwind:
+                          type: boolean
+                        isHelpingHand:
+                          type: boolean
+                        isFlowerGift:
+                          type: boolean
+                        isPowerTrick:
+                          type: boolean
+                        isFriendGuard:
+                          type: boolean
+                        isBattery:
+                          type: boolean
+                        isPowerSpot:
+                          type: boolean
+                        isSteelySpirit:
+                          type: boolean
+                        isSwitching:
+                          type: string
+                          enum:
+                            - out
+                            - in
+                      additionalProperties: false
+                    defenderSide:
+                      type: object
+                      properties:
+                        spikes:
+                          type: integer
+                          minimum: 0
+                          maximum: 3
+                        steelsurge:
+                          type: boolean
+                        vinelash:
+                          type: boolean
+                        wildfire:
+                          type: boolean
+                        cannonade:
+                          type: boolean
+                        volcalith:
+                          type: boolean
+                        isSR:
+                          type: boolean
+                        isReflect:
+                          type: boolean
+                        isLightScreen:
+                          type: boolean
+                        isAuroraVeil:
+                          type: boolean
+                        isProtected:
+                          type: boolean
+                        isSeeded:
+                          type: boolean
+                        isSaltCured:
+                          type: boolean
+                        isForesight:
+                          type: boolean
+                        isTailwind:
+                          type: boolean
+                        isHelpingHand:
+                          type: boolean
+                        isFlowerGift:
+                          type: boolean
+                        isPowerTrick:
+                          type: boolean
+                        isFriendGuard:
+                          type: boolean
+                        isBattery:
+                          type: boolean
+                        isPowerSpot:
+                          type: boolean
+                        isSteelySpirit:
+                          type: boolean
+                        isSwitching:
+                          type: string
+                          enum:
+                            - out
+                            - in
+                      additionalProperties: false
+                  additionalProperties: false
+              required:
+                - format
+                - attacker
+                - defender
+                - move
+              additionalProperties: false
+      responses:
+        "200":
+          description: Calculation result
+        "400":
+          description: Invalid input

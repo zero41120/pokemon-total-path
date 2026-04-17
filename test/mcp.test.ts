@@ -1,9 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import {
-  OPENAPI_YAML,
-  REST_ENDPOINTS,
-  startMcpServer,
-} from "../src/mcp";
+import { REST_ENDPOINTS, startMcpServer } from "../src/mcp";
 
 const originalFetch = globalThis.fetch;
 
@@ -12,13 +8,17 @@ afterEach(() => {
 });
 
 describe("mcp wrapper", () => {
-  test("exposes the OpenAPI YAML", () => {
-    expect(OPENAPI_YAML).toContain("openapi: 3.1.0");
-    expect(OPENAPI_YAML).toContain("title: Pokemon Champions API");
+  test("exposes REST endpoints from TypeScript definitions", () => {
+    expect(Array.isArray(REST_ENDPOINTS)).toBe(true);
+    expect(REST_ENDPOINTS.length).toBeGreaterThan(0);
   });
 
-  test("registers MCP tools from REST endpoints", () => {
-    expect(Array.isArray(REST_ENDPOINTS)).toBe(true);
+  test("calc endpoint is registered with correct metadata", () => {
+    const calc = REST_ENDPOINTS.find((e) => e.toolName === "calc");
+    expect(calc).toBeDefined();
+    expect(calc!.method).toBe("POST");
+    expect(calc!.path).toBe("/calc");
+    expect(calc!.inputSchema).toBeDefined();
   });
 
   test("acknowledges notifications/initialized", async () => {
@@ -27,14 +27,8 @@ describe("mcp wrapper", () => {
     try {
       const response = await fetch("http://127.0.0.1:3101/mcp", {
         method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "notifications/initialized",
-          params: {},
-        }),
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized", params: {} }),
       });
 
       expect(response.status).toBe(202);
@@ -42,15 +36,11 @@ describe("mcp wrapper", () => {
     } finally {
       await new Promise<void>((resolve, reject) => {
         server.close((error) => {
-          if (error) {
-            if ((error as NodeJS.ErrnoException).code === "ERR_SERVER_NOT_RUNNING") {
-              resolve();
-              return;
-            }
+          if (error && (error as NodeJS.ErrnoException).code !== "ERR_SERVER_NOT_RUNNING") {
             reject(error);
-            return;
+          } else {
+            resolve();
           }
-          resolve();
         });
       });
     }
