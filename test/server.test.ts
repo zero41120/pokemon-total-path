@@ -87,4 +87,46 @@ describe("server", () => {
     expect(body.ok).toBe(true);
     expect(body.pid).toBe(4321);
   });
+
+  test("supports legacy forceStatsValue payloads", async () => {
+    const response = await createServer().fetch(
+      new Request("http://localhost/calc", {
+        method: "POST",
+        body: JSON.stringify({
+          calcs: [
+            {
+              attacker: {
+                name: "Talonflame",
+                forceStatsValue: {
+                  spa: 109,
+                },
+              },
+              move: {
+                name: "Overheat",
+              },
+              defender: {
+                name: "Archaludon",
+                evs: {
+                  spd: 0,
+                },
+              },
+              attackerOptionalParameterIgnoreUnlessNecessary: {
+                forceStatsValue: {
+                  spa: 109,
+                },
+              },
+              format: "Singles",
+            },
+          ],
+        }),
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body[0].attacker.stats.split("/")[3]).toContain("109");
+  });
 });

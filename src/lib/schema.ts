@@ -18,6 +18,7 @@ export type CombatantInput = {
   nature?: string;
   currentHP?: number;
   boosts?: Partial<Record<Exclude<StatID, "hp">, number>>;
+  forceStatsValue?: Partial<ExactStats>;
   status?: string;
   teraType?: string;
 };
@@ -45,6 +46,10 @@ export type CalcRequest = {
   defender: CombatantInput;
   move: string;
   field?: CalcField;
+};
+
+type LegacyOptionalOverrides = {
+  forceStatsValue?: Partial<ExactStats>;
 };
 
 const STAT_IDS: StatID[] = ["hp", "atk", "def", "spa", "spd", "spe"];
@@ -78,6 +83,23 @@ export function parseStats(value: unknown, field: string): ExactStats {
   const stats = {} as ExactStats;
   for (const stat of STAT_IDS) {
     const raw = value[stat];
+    if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) {
+      throw new ValidationError(`Expected positive number for ${field}.${stat}`);
+    }
+    stats[stat] = raw;
+  }
+  return stats;
+}
+
+function parsePartialStats(value: unknown, field: string): Partial<ExactStats> {
+  if (!isPlainObject(value)) {
+    throw new ValidationError(`Expected stats object for ${field}`);
+  }
+
+  const stats: Partial<ExactStats> = {};
+  for (const stat of STAT_IDS) {
+    const raw = value[stat];
+    if (raw === undefined) continue;
     if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) {
       throw new ValidationError(`Expected positive number for ${field}.${stat}`);
     }
@@ -124,12 +146,12 @@ export function parseCombatant(value: unknown, field: string): CombatantInput {
     throw new ValidationError(`Expected object for ${field}`);
   }
 
-  if (!value.species) {
-    throw new ValidationError(`${field} must include species`);
+  const speciesValue = value.species ?? value.name;
+  if (!speciesValue) {
+    throw new ValidationError(`${field} must include species (or name)`);
   }
-
   const combatant: CombatantInput = {
-    species: assertString(value.species, `${field}.species`),
+    species: assertString(speciesValue, `${field}.species`),
   };
   if (value.name !== undefined) combatant.name = assertString(value.name, `${field}.name`);
   if (value.baseSpecies !== undefined) combatant.baseSpecies = assertString(value.baseSpecies, `${field}.baseSpecies`);
@@ -148,6 +170,9 @@ export function parseCombatant(value: unknown, field: string): CombatantInput {
     combatant.moves = value.moves;
   }
   if (value.exactStats !== undefined) combatant.exactStats = parseStats(value.exactStats, `${field}.exactStats`);
+  if (value.forceStatsValue !== undefined) {
+    combatant.forceStatsValue = parsePartialStats(value.forceStatsValue, `${field}.forceStatsValue`);
+  }
   if (value.championsPoints !== undefined) {
     combatant.championsPoints = parseChampionsPoints(value.championsPoints, `${field}.championsPoints`);
   }
@@ -161,10 +186,6 @@ export function parseCombatant(value: unknown, field: string): CombatantInput {
   if (value.status !== undefined) combatant.status = assertString(value.status, `${field}.status`);
   if (value.teraType !== undefined) combatant.teraType = assertString(value.teraType, `${field}.teraType`);
 
-  if (!combatant.exactStats && !combatant.championsPoints) {
-    throw new ValidationError(`${field} requires exactStats or championsPoints`);
-  }
-
   return combatant;
 }
 
@@ -173,10 +194,26 @@ export function parseCalcRequest(value: unknown, _index?: number): CalcRequest {
     throw new ValidationError("Expected request body object");
   }
 
+  const attacker = parseCombatant(value.attacker, "attacker");
+  const defender = parseCombatant(value.defender, "defender");
+  const move = isPlainObject(value.move)
+    ? assertString(value.move.name, "move.name")
+    : assertString(value.move, "move");
+
+  const attackerOptional = isPlainObject(value.attackerOptionalParameterIgnoreUnlessNecessary)
+    ? value.attackerOptionalParameterIgnoreUnlessNecessary as LegacyOptionalOverrides
+    : undefined;
+  if (!attacker.forceStatsValue && attackerOptional?.forceStatsValue) {
+    attacker.forceStatsValue = parsePartialStats(
+      attackerOptional.forceStatsValue,
+      "attackerOptionalParameterIgnoreUnlessNecessary.forceStatsValue",
+    );
+  }
+
   return {
-    attacker: parseCombatant(value.attacker, "attacker"),
-    defender: parseCombatant(value.defender, "defender"),
-    move: assertString(value.move, "move"),
+    attacker,
+    defender,
+    move,
     field: isPlainObject(value.field) ? (value.field as CalcField) : undefined,
   };
 }

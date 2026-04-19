@@ -14,7 +14,7 @@ export type ResolvedCombatant = {
   ability?: string;
   displayAbility?: string;
   stats: ExactStats;
-  source: "exact-stats" | "champions-points";
+  source: "exact-stats" | "champions-points" | "default";
   championsPoints?: Partial<Record<"hp" | "atk" | "def" | "spa" | "spd" | "spe", number>>;
   nature?: string;
   moves?: string[];
@@ -55,12 +55,25 @@ export async function resolveCombatant(input: CombatantInput): Promise<ResolvedC
     ? mergeChampionsPoints(input.championsPoints)
     : undefined;
 
-  let stats = input.exactStats!;
-  let sourceType: ResolvedCombatant["source"] = "exact-stats";
+  let stats: ExactStats;
+  let sourceType: ResolvedCombatant["source"];
 
-  if (!input.exactStats && championsPoints) {
+  if (input.exactStats) {
+    stats = input.exactStats;
+    sourceType = "exact-stats";
+  } else if (championsPoints) {
     stats = calculateChampionsStats(input.species, input.level ?? 50, championsPoints, nature);
     sourceType = "champions-points";
+  } else {
+    stats = calculateChampionsStats(input.species, input.level ?? 50, {}, nature);
+    sourceType = "default";
+  }
+
+  if (input.forceStatsValue) {
+    stats = {
+      ...stats,
+      ...input.forceStatsValue,
+    };
   }
 
   return {
