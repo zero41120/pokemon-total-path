@@ -108,6 +108,7 @@ describe("CalcRequestSchema", () => {
     });
     expect(result.success).toBe(true);
   });
+
 });
 
 // ---------------------------------------------------------------------------
@@ -369,6 +370,25 @@ describe("runCalc", () => {
 // ---------------------------------------------------------------------------
 
 describe("forceStatsValue", () => {
+  test("uses exact forced final stat value", () => {
+    const result = runCalc({
+      attacker: {
+        name: "Talonflame",
+        optionalParameterIgnoreUnlessNecessary: {
+          forceStatsValue: { spa: 109 },
+        },
+      },
+      defender: {
+        name: "Archaludon",
+        evs: { spd: 0 },
+      },
+      move: { name: "Overheat" },
+      format: "Singles",
+    });
+
+    expect(result.attackerStats).toContain("109!");
+  });
+
   test("forced stat appears with ! in attackerStats", () => {
     const result = runCalc({
       attacker: {

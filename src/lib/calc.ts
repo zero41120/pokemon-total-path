@@ -86,8 +86,10 @@ function buildPokemon(genNum: GenerationNum, input: PokemonInput): Pokemon {
     {} as Partial<StatsTable>,
   );
 
+  let forcedStats: Partial<Record<StatID, number>> | undefined;
   let overrides: Record<string, unknown> | undefined;
   if (p.forceStatsValue && Object.keys(p.forceStatsValue).length > 0) {
+    forcedStats = {};
     const { plus, minus } = getNatureMods(input.nature);
     const baseStats: Partial<StatsTable> = {};
     for (const [k, v] of Object.entries(p.forceStatsValue) as [
@@ -95,6 +97,7 @@ function buildPokemon(genNum: GenerationNum, input: PokemonInput): Pokemon {
       number,
     ][]) {
       if (v == null) continue;
+      forcedStats[k] = v;
       const nm = k === plus ? 1.1 : k === minus ? 0.9 : 1.0;
       baseStats[k] = backCalcBase(v, k, nm);
       resolvedEvs[k] = 0;
@@ -103,7 +106,7 @@ function buildPokemon(genNum: GenerationNum, input: PokemonInput): Pokemon {
     overrides = { baseStats };
   }
 
-  return new Pokemon(gen, input.name, {
+  const pokemon = new Pokemon(gen, input.name, {
     level: FIXED_LEVEL,
     ability: input.ability,
     abilityOn: p.abilityOn,
@@ -124,6 +127,18 @@ function buildPokemon(genNum: GenerationNum, input: PokemonInput): Pokemon {
     moves: p.moves as never,
     overrides: overrides as never,
   });
+
+  if (forcedStats) {
+    for (const [k, v] of Object.entries(forcedStats) as [StatID, number][]) {
+      pokemon.rawStats[k] = v;
+      pokemon.stats[k] = v;
+    }
+    if (forcedStats.hp != null) {
+      pokemon.originalCurHP = Math.min(pokemon.originalCurHP, forcedStats.hp);
+    }
+  }
+
+  return pokemon;
 }
 
 function buildMove(genNum: GenerationNum, input: MoveInput): Move {
