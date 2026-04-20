@@ -389,6 +389,39 @@ describe("forceStatsValue", () => {
     expect(result.attackerStats).toContain("109!");
   });
 
+  test("forced spa value affects calc output for Talonflame Overheat", () => {
+    const base = runCalc({
+      attacker: {
+        name: "Talonflame",
+        evs: { spa: 0 },
+      },
+      defender: {
+        name: "Archaludon",
+        evs: { hp: 0, spd: 0 },
+      },
+      move: { name: "Overheat" },
+      format: "Singles",
+    });
+
+    const forced = runCalc({
+      attacker: {
+        name: "Talonflame",
+        optionalParameterIgnoreUnlessNecessary: {
+          forceStatsValue: { spa: 109 },
+        },
+      },
+      defender: {
+        name: "Archaludon",
+        evs: { hp: 0, spd: 0 },
+      },
+      move: { name: "Overheat" },
+      format: "Singles",
+    });
+
+    expect(forced.range[0]).toBeGreaterThan(base.range[0]);
+    expect(forced.range[1]).toBeGreaterThan(base.range[1]);
+  });
+
   test("forced stat appears with ! in attackerStats", () => {
     const result = runCalc({
       attacker: {
