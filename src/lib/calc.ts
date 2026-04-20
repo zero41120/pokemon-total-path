@@ -69,12 +69,25 @@ function toChampPoints(
   return result;
 }
 
-// Back-calculate the base stat that produces targetFinal at level 50, iv=31, ev=0, given nature multiplier.
-// Non-HP: finalStat = floor((2*base + 31) / 2 + 5) * nm  ≈  (base + 20) * nm
-// HP:     finalStat = floor((2*base + 31) / 2) + 60       ≈  base + 75
+// Back-calculate the base stat that produces targetFinal at level 50 with IV=0 and EV=0.
+// We use an exact search to handle flooring and nature rounding correctly.
 function backCalcBase(target: number, stat: StatID, nm: number): number {
-  if (stat === "hp") return target - 75;
-  return Math.round(target / nm) - 20;
+  const calc = (base: number) => {
+    if (stat === "hp") {
+      return Math.floor((2 * base) / 2) + 60;
+    }
+
+    const preNature = Math.floor((2 * base) / 2) + 5;
+    return Math.floor(preNature * nm);
+  };
+
+  for (let base = 1; base <= 255; base++) {
+    if (calc(base) === target) return base;
+  }
+
+  return stat === "hp"
+    ? Math.max(1, Math.min(255, target - 60))
+    : Math.max(1, Math.min(255, Math.round(target / nm) - 5));
 }
 
 function buildPokemon(genNum: GenerationNum, input: PokemonInput): Pokemon {
